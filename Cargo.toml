@@ -1,0 +1,22 @@
+[package]
+name = "gpm"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anstyle = "1.0.6"
+anyhow = "1.0.81"
+clap = { version = "4.5.4", features = ["derive", "color"] }
+colored = "2.1.0"
+dirs = "5.0.1"
+futures = "0.3.30"
+indicatif = "0.17.8"
+once_cell = "1.19.0"
+reqwest = { version = "0.12.2" }
+serde = { version = "1.0.197", features = ["derive"] }
+tabwriter = { version = "1.4.0", features = ["ansi_formatting"] }
+tokio = "1.37.0"
+toml = "0.8.12"
+zip = "0.6.6"

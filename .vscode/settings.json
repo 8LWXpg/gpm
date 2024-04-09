@@ -1,0 +1,11 @@
+{
+    "rust-analyzer.linkedProjects": [
+        ".\\Cargo.toml"
+    ],
+    "cSpell.words": [
+        "etag",
+        "indicatif",
+        "reqwest",
+        "tabwriter"
+    ]
+}
