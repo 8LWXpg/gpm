@@ -1,17 +1,21 @@
 mod main_config;
-mod namespace;
+// mod namespace;
 mod package_config;
-mod type_config;
+// mod type_config;
+
+use main_config::{Config, NamespaceProp};
 
 use clap::builder::styling;
 use clap::{Args, Parser, Subcommand};
 use colored::{ColoredString, Colorize};
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
+use std::process;
 
 static GPM_HOME: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap().join(".gpm"));
 static GPM_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("config.toml"));
 static NAMESPACES_CONFIG: &str = "version.toml";
+static NAMESPACES_PATH: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("namespaces"));
 static SCRIPT_ROOT: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("scripts"));
 static ERROR: Lazy<ColoredString> = Lazy::new(|| "error:".bright_red().bold());
 
@@ -44,8 +48,9 @@ enum TopCommand {
     /// Remove a namespace
     #[clap(visible_alias = "r")]
     Remove {
-        /// The name of the namespace
-        name: String,
+        /// Namespace name
+        #[clap(num_args = 1..)]
+        name: Vec<String>,
     },
 
     /// List all namespaces
@@ -63,7 +68,7 @@ enum TopCommand {
 
 #[derive(Debug, Args)]
 struct Namespace {
-    /// The name of the namespace
+    /// Namespace name
     name: String,
 
     #[clap(subcommand)]
@@ -85,7 +90,7 @@ enum NamespaceCommand {
         args: Vec<String>,
     },
 
-    /// Remove a package from the namespace
+    /// Remove packages in the namespace
     #[clap(visible_alias = "r")]
     Remove {
         /// The name of the package
@@ -93,22 +98,22 @@ enum NamespaceCommand {
         name: Vec<String>,
     },
 
-    /// Update a package in the namespace
+    /// Update packages in the namespace
     #[clap(visible_alias = "u")]
     Update {
-        /// The name of the package, space separated
+        /// Package name
         #[clap(num_args = 1..)]
         name: Vec<String>,
 
-        /// switch for update all
+        /// Update all
         #[clap(short, long)]
         all: bool,
     },
 
-    /// Clone a package in the namespace to the current directory
+    /// Clone packages in the namespace to the current directory
     #[clap(visible_alias = "c")]
     Clone {
-        /// The name of the package, space separated
+        /// Package name
         #[clap(num_args = 1..)]
         name: Vec<String>,
     },
@@ -133,7 +138,7 @@ enum TypeCommand {
     /// Remove a package type
     #[clap(visible_alias = "r")]
     Remove {
-        /// The name of the package type
+        /// Type name
         #[clap(num_args = 1..)]
         name: Vec<String>,
     },
@@ -154,68 +159,48 @@ fn get_styles() -> clap::builder::Styles {
         .placeholder(styling::AnsiColor::Cyan.on_default())
 }
 
+/// Print an error message to stderr.
+#[macro_export]
+macro_rules! error {
+    ($msg:expr) => {
+        eprintln!("{} {}", "error:".bright_red().bold(), $msg)
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        eprintln!("{} {}", "error:".bright_red().bold(), format!($fmt, $($arg)*))
+    };
+}
+
+fn error_exit0<T>(msg: T)
+where
+    T: std::fmt::Display,
+{
+    error!(msg);
+    process::exit(0);
+}
+
 fn main() {
     let args = App::parse();
 
     match args.command {
         TopCommand::Add { name, path } => {
-            // update global config
-            let mut gpm_cfg = main_config::load_config()
-                .unwrap_or_else(|_| main_config::Config { namespaces: vec![] });
-            if gpm_cfg.namespaces.iter().any(|ns| ns.name == name) {
-                eprintln!(
-                    "{} namespace '{}' already exists",
-                    &*ERROR,
-                    name.bright_yellow()
-                );
-                return;
-            }
-
-            let dir = path.unwrap_or_else(|| GPM_HOME.join(&name));
-            let namespace =
-                main_config::NamespaceConfig::new(name, dir.to_str().unwrap().to_string());
-            namespace.add().unwrap();
-            gpm_cfg.namespaces.push(namespace);
-            main_config::save_config(&gpm_cfg).unwrap();
+            let mut gpm_cfg = Config::load().unwrap_or_default();
+            let ns = NamespaceProp::new(path.unwrap_or(NAMESPACES_PATH.join(&name)));
+            gpm_cfg.add(name, ns).unwrap_or_else(error_exit0);
+            gpm_cfg.save().unwrap_or_else(error_exit0);
         }
-        TopCommand::Remove { name } => match main_config::load_config() {
-            Ok(mut gpm_cfg) => match gpm_cfg.namespaces.iter().position(|ns| ns.name == name) {
-                Some(index) => {
-                    // remove namespace registry and folder
-                    let remove = &gpm_cfg.namespaces[index];
-                    remove.remove().unwrap();
-                    gpm_cfg.namespaces.remove(index);
-                    main_config::save_config(&gpm_cfg).unwrap();
-                }
-                None => eprintln!(
-                    "{} namespace '{}' does not exist",
-                    &*ERROR,
-                    name.bright_yellow()
-                ),
-            },
-            Err(e) => eprintln!("{} {}", &*ERROR, e),
-        },
-        TopCommand::List => match main_config::load_config() {
-            Ok(gpm_cfg) => {
-                println!("{}", "Namespaces:".bright_green());
-                println!("{}", gpm_cfg.print());
-            }
-            Err(e) => eprintln!("{} {}", &*ERROR, e),
-        },
-        TopCommand::Namespace(ns) => match main_config::load_config() {
-            Ok(gpm_cfg) => match gpm_cfg.namespaces.iter().find(|n| n.name == ns.name) {
-                Some(n) => match namespace::namespace(ns, n) {
-                    Ok(_) => {}
-                    Err(e) => eprintln!("{} {}", &*ERROR, e),
-                },
-                None => eprintln!(
-                    "{} namespace '{}' does not exist",
-                    &*ERROR,
-                    ns.name.bright_yellow()
-                ),
-            },
-            Err(e) => eprintln!("{} {}", &*ERROR, e),
-        },
+        TopCommand::Remove { name } => {
+            let mut gpm_cfg = Config::load().unwrap_or_default();
+            gpm_cfg.remove(name);
+            gpm_cfg.save().unwrap_or_else(error_exit0);
+        }
+        TopCommand::List => {
+            let gpm_cfg = Config::load().unwrap_or_default();
+            println!("{}", "Namespaces:".bright_green());
+            println!("{}", gpm_cfg.print());
+        }
+        TopCommand::Namespace(ns) => {
+            // TODO: Implement namespace command
+        }
         TopCommand::Type(t) => match t {
             TypeCommand::Add { name, script } => {}
             TypeCommand::Remove { name } => {}
