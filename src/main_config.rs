@@ -1,4 +1,6 @@
-use crate::package_config;
+//! Handling main configuration file at GPM_CONFIG.
+
+// use crate::namespace_config;
 use crate::{error, GPM_CONFIG, NAMESPACES_CONFIG, NAMESPACES_PATH};
 
 use anyhow::{anyhow, Result};
@@ -6,14 +8,16 @@ use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use std::{fmt, fs};
 use tabwriter::TabWriter;
 
+// Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlConfig {
+    /// Key: namespace name, Value: namespace properties
     namespaces: HashMap<String, TomlNamespaceProp>,
 }
 
@@ -36,6 +40,7 @@ impl TomlConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlNamespaceProp {
+    /// Key: namespace name, Value: namespace properties
     path: String,
 }
 
@@ -51,11 +56,16 @@ impl Config {
         }
     }
 
-    /// Load the configuration.
+    /// Load the configuration, or calls `new()` if it doesn't exist.
     pub fn load() -> Result<Self> {
-        toml::from_str::<TomlConfig>(&fs::read_to_string(GPM_CONFIG.as_path())?)
-            .map(|c| c.into_config())
-            .map_err(Into::into)
+        let path = GPM_CONFIG.as_path();
+        if !path.exists() {
+            Ok(Self::new())
+        } else {
+            toml::from_str::<TomlConfig>(&fs::read_to_string(path)?)
+                .map(|c| c.into_config())
+                .map_err(Into::into)
+        }
     }
 
     /// Save the configuration.
@@ -65,21 +75,6 @@ impl Config {
             toml::to_string(&self.into_toml_config())?,
         )
         .map_err(Into::into)
-    }
-
-    pub fn print(&self) -> String {
-        let mut tw = TabWriter::new(vec![]);
-        for (name, ns) in &self.namespaces {
-            writeln!(
-                &mut tw,
-                "  {}\t{}",
-                name.bright_cyan(),
-                ns.path.to_str().unwrap()
-            )
-            .unwrap();
-        }
-        tw.flush().unwrap();
-        String::from_utf8(tw.into_inner().unwrap()).unwrap()
     }
 
     fn into_toml_config(self) -> TomlConfig {
@@ -101,11 +96,14 @@ impl Config {
 
     /// Add a namespace to the configuration.
     pub fn add(&mut self, name: String, ns: NamespaceProp) -> Result<()> {
-        if let Entry::Vacant(e) = self.namespaces.entry(name) {
+        if let Entry::Vacant(e) = self.namespaces.entry(name.clone()) {
             e.insert(ns);
             Ok(())
         } else {
-            Err(anyhow!("namespace '{}' already exists", name))
+            Err(anyhow!(
+                "namespace '{}' already exists",
+                name.bright_yellow()
+            ))
         }
     }
 
@@ -128,6 +126,25 @@ impl Default for Config {
     }
 }
 
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut tw = TabWriter::new(vec![]);
+        writeln!(&mut tw, "{}", "Namespaces:".bright_green()).unwrap();
+        for (name, ns) in &self.namespaces {
+            writeln!(
+                &mut tw,
+                "  {}\t{}",
+                name.bright_cyan(),
+                ns.path.to_str().unwrap()
+            )
+            .unwrap();
+        }
+        tw.flush().unwrap();
+        let result = String::from_utf8(tw.into_inner().unwrap()).unwrap();
+        write!(f, "{}", result)
+    }
+}
+
 /// Property of a namespace in the GPM configuration.
 pub struct NamespaceProp {
     /// Full path to the namespace directory
@@ -141,14 +158,14 @@ impl NamespaceProp {
         }
     }
 
-    pub fn add(&self) -> Result<()> {
+    fn add(&self) -> Result<()> {
         fs::create_dir_all(&self.path)?;
         let cfg_path = Path::new(&self.path).join(NAMESPACES_CONFIG);
-        package_config::Config::new().save(&cfg_path)?;
+        // namespace_config::Config::new().save(&cfg_path)?;
         Ok(())
     }
 
-    pub fn remove(&self) -> Result<()> {
+    fn remove(&self) -> Result<()> {
         fs::remove_dir_all(&self.path)?;
         Ok(())
     }

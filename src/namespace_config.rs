@@ -1,4 +1,4 @@
-use crate::PackageType;
+//! Handling namespace configuration file at main_config::NamespaceProp.path.
 
 use anyhow::{anyhow, Ok, Result};
 use colored::Colorize;
@@ -17,6 +17,7 @@ use std::{env, fmt, result};
 use tokio::runtime::Builder;
 use zip::read::ZipArchive;
 
+// Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TomlConfig {
     /// Key: package name, Value: package details
@@ -25,29 +26,14 @@ pub struct TomlConfig {
 
 impl TomlConfig {
     pub fn to_config(&self) -> Config {
-        Config {
-            packages: self
-                .packages
-                .iter()
-                .map(|(name, package)| {
-                    (
-                        name.clone(),
-                        Package {
-                            r#type: PackageType::from_str(&package.r#type).unwrap(),
-                            url: package.url.clone(),
-                            etag: package.etag.clone(),
-                        },
-                    )
-                })
-                .collect(),
-        }
+        Config {}
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TomlPackage {
     pub r#type: String,
-    pub url: String,
+    pub args: Vec<String>,
     /// ETag for the package
     pub etag: Option<String>,
 }
@@ -86,7 +72,7 @@ impl Config {
                 "  {}\t{}\t{}",
                 name.bright_cyan(),
                 package.r#type.to_string().bright_purple(),
-                package.url
+                package.args
             )
             .unwrap();
         }
@@ -104,7 +90,7 @@ impl Config {
                         name.clone(),
                         TomlPackage {
                             r#type: package.r#type.to_string(),
-                            url: package.url.clone(),
+                            args: package.args.clone(),
                             etag: package.etag.clone(),
                         },
                     )
@@ -200,32 +186,32 @@ impl Default for Config {
 #[derive(Debug)]
 pub struct Package {
     pub r#type: PackageType,
-    pub url: String,
+    pub args: Vec<String>,
     /// ETag for the package
     pub etag: Option<String>,
 }
 
 impl Package {
-    pub fn new(r#type: PackageType, url: String) -> Self {
+    pub fn new(r#type: PackageType, args: Vec<String>) -> Self {
         Self {
             r#type,
-            url,
+            args,
             etag: None,
         }
     }
 
-    /// Clone packages from source, add ETag if available.
+    /// Call script with name `type`
     fn add(&mut self, ns_path: &Path, name: &str) -> Result<()> {
         match self.r#type {
             PackageType::Git => {
                 let output = Command::new("git")
-                    .args(["clone", self.url.as_ref(), name])
+                    .args(["clone", self.args.as_ref(), name])
                     .current_dir(ns_path)
                     .status()?;
                 if !output.success() {
                     return Err(anyhow!(
                         "failed to clone '{}'",
-                        self.url.to_string().bright_yellow(),
+                        self.args.to_string().bright_yellow(),
                     ));
                 }
             }
@@ -236,7 +222,7 @@ impl Package {
 
                 let rt = Builder::new_current_thread().enable_all().build()?;
                 self.etag = rt.block_on(download_with_progress(
-                    self.url.as_ref(),
+                    self.args.as_ref(),
                     &mut file,
                     &HeaderValue::from_static("application/zip"),
                 ))?;
@@ -260,13 +246,13 @@ impl Package {
 
                 let rt = Builder::new_current_thread().enable_all().build()?;
                 self.etag = rt.block_on(download_with_progress(
-                    self.url.as_ref(),
+                    self.args.as_ref(),
                     &mut file,
                     &HeaderValue::from_static("application/octet-stream"),
                 ))?;
             }
             PackageType::Local => {
-                copy_dir_all(ns_path.join(name), &self.url)?;
+                copy_dir_all(ns_path.join(name), &self.args)?;
             }
         }
         Ok(())
@@ -319,7 +305,7 @@ impl Package {
             }
             PackageType::Zip => {
                 let rt = Builder::new_current_thread().enable_all().build()?;
-                let etag = rt.block_on(head_with_etag(self.url.as_ref()))?;
+                let etag = rt.block_on(head_with_etag(self.args.as_ref()))?;
                 if etag == self.etag {
                     return Ok(());
                 }
@@ -327,13 +313,13 @@ impl Package {
             }
             PackageType::Exe => {
                 let rt = Builder::new_current_thread().enable_all().build()?;
-                let etag = rt.block_on(head_with_etag(self.url.as_ref()))?;
+                let etag = rt.block_on(head_with_etag(self.args.as_ref()))?;
                 if etag == self.etag {
                     return Ok(());
                 }
                 self.add(ns_path, name)?
             }
-            PackageType::Local => copy_dir_all(ns_path.join(name), &self.url)?,
+            PackageType::Local => copy_dir_all(ns_path.join(name), &self.args)?,
         }
         Ok(())
     }
