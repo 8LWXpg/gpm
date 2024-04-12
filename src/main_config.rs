@@ -1,6 +1,6 @@
 //! Handling main configuration file at GPM_CONFIG.
 
-// use crate::namespace_config;
+use crate::repository_config;
 use crate::{error, GPM_CONFIG, NAMESPACES_CONFIG, NAMESPACES_PATH};
 
 use anyhow::{anyhow, Result};
@@ -9,28 +9,28 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::path::Path;
 use std::{fmt, fs};
 use tabwriter::TabWriter;
 
 // Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlConfig {
-    /// Key: namespace name, Value: namespace properties
-    namespaces: HashMap<String, TomlNamespaceProp>,
+    /// Key: repository name, Value: repository properties
+    repositories: HashMap<String, TomlRepositoryProp>,
 }
 
 impl TomlConfig {
     fn into_config(self) -> Config {
         Config {
-            namespaces: self
-                .namespaces
+            repositories: self
+                .repositories
                 .into_iter()
                 .map(|(name, ns)| {
                     (
                         name,
-                        NamespaceProp::new(PathBuf::from_str(&ns.path).unwrap()),
+                        RepositoryProp::new(Path::new(&*ns.path))
+                            .expect("failed to create repository"),
                     )
                 })
                 .collect(),
@@ -39,20 +39,20 @@ impl TomlConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct TomlNamespaceProp {
-    /// Key: namespace name, Value: namespace properties
-    path: String,
+struct TomlRepositoryProp {
+    /// Key: repository name, Value: repository properties
+    path: Box<str>,
 }
 
 /// GPM configuration.
 pub struct Config {
-    pub namespaces: HashMap<String, NamespaceProp>,
+    pub repositories: HashMap<String, RepositoryProp>,
 }
 
 impl Config {
     pub fn new() -> Self {
         Self {
-            namespaces: HashMap::new(),
+            repositories: HashMap::new(),
         }
     }
 
@@ -79,14 +79,14 @@ impl Config {
 
     fn into_toml_config(self) -> TomlConfig {
         TomlConfig {
-            namespaces: self
-                .namespaces
+            repositories: self
+                .repositories
                 .into_iter()
                 .map(|(name, ns)| {
                     (
                         name,
-                        TomlNamespaceProp {
-                            path: ns.path.to_string_lossy().to_string(),
+                        TomlRepositoryProp {
+                            path: ns.path.to_string_lossy().into(),
                         },
                     )
                 })
@@ -94,27 +94,27 @@ impl Config {
         }
     }
 
-    /// Add a namespace to the configuration.
-    pub fn add(&mut self, name: String, ns: NamespaceProp) -> Result<()> {
-        if let Entry::Vacant(e) = self.namespaces.entry(name.clone()) {
-            e.insert(ns);
+    /// Add a repository to the configuration.
+    pub fn add(&mut self, name: String, path: &Path) -> Result<()> {
+        if let Entry::Vacant(e) = self.repositories.entry(name.clone()) {
+            e.insert(RepositoryProp::new(path)?);
             Ok(())
         } else {
             Err(anyhow!(
-                "namespace '{}' already exists",
+                "repository '{}' already exists",
                 name.bright_yellow()
             ))
         }
     }
 
-    /// Remove namespaces from the configuration.
+    /// Remove repositories from the configuration.
     pub fn remove(&mut self, names: Vec<String>) {
         for name in names {
-            match self.namespaces.remove(&name) {
+            match self.repositories.remove(&name) {
                 Some(ns) => ns.remove().unwrap_or_else(|e| {
                     error!("failed to remove package '{}' {}", name.bright_yellow(), e)
                 }),
-                None => error!("namespace '{}' does not exist", name.bright_yellow()),
+                None => error!("repository '{}' does not exist", name.bright_yellow()),
             }
         }
     }
@@ -129,8 +129,8 @@ impl Default for Config {
 impl fmt::Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut tw = TabWriter::new(vec![]);
-        writeln!(&mut tw, "{}", "Namespaces:".bright_green()).unwrap();
-        for (name, ns) in &self.namespaces {
+        writeln!(&mut tw, "{}", "Repositories:".bright_green()).unwrap();
+        for (name, ns) in &self.repositories {
             writeln!(
                 &mut tw,
                 "  {}\t{}",
@@ -145,24 +145,20 @@ impl fmt::Display for Config {
     }
 }
 
-/// Property of a namespace in the GPM configuration.
-pub struct NamespaceProp {
-    /// Full path to the namespace directory
-    pub path: PathBuf,
+/// Property of a repository in the GPM configuration.
+struct RepositoryProp {
+    /// Full path to the repository directory
+    path: Box<Path>,
 }
 
-impl NamespaceProp {
-    pub fn new(path: PathBuf) -> Self {
-        Self {
-            path: NAMESPACES_PATH.join(path),
-        }
-    }
-
-    fn add(&self) -> Result<()> {
-        fs::create_dir_all(&self.path)?;
-        let cfg_path = Path::new(&self.path).join(NAMESPACES_CONFIG);
-        // namespace_config::Config::new().save(&cfg_path)?;
-        Ok(())
+impl RepositoryProp {
+    pub fn new(path: &Path) -> Result<Self> {
+        fs::create_dir_all(path)?;
+        let cfg_path = path.join(NAMESPACES_CONFIG);
+        repository_config::Config::new().save(&cfg_path)?;
+        Ok(Self {
+            path: NAMESPACES_PATH.join(path).into_boxed_path(),
+        })
     }
 
     fn remove(&self) -> Result<()> {

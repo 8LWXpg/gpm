@@ -1,6 +1,6 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
-use crate::{error, TYPES_CONFIG};
+use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
 
 use anyhow::{anyhow, Result};
 use colored::Colorize;
@@ -24,7 +24,7 @@ impl TomlTypeConfig {
             types: self
                 .types
                 .into_iter()
-                .map(|(name, ns)| (name, TypeProp { ext: ns.ext }))
+                .map(|(name, ns)| (name, TypeProp::new(ns.ext, ns.return_type.parse().unwrap())))
                 .collect(),
         }
     }
@@ -33,6 +33,7 @@ impl TomlTypeConfig {
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlTypeProp {
     ext: String,
+    return_type: String,
 }
 
 /// Configuration for package types.
@@ -75,15 +76,23 @@ impl TypeConfig {
             types: self
                 .types
                 .into_iter()
-                .map(|(name, ns)| (name, TomlTypeProp { ext: ns.ext }))
+                .map(|(name, ns)| {
+                    (
+                        name,
+                        TomlTypeProp {
+                            ext: ns.ext,
+                            return_type: ns.return_type.to_string(),
+                        },
+                    )
+                })
                 .collect(),
         }
     }
 
     /// Add a new type.
-    pub fn add(&mut self, name: String, prop: TypeProp) -> Result<()> {
+    pub fn add(&mut self, name: String, ext: String, ret: ReturnType) -> Result<()> {
         if let Entry::Vacant(e) = self.types.entry(name.clone()) {
-            e.insert(prop);
+            e.insert(TypeProp::new(ext, ret));
             Ok(())
         } else {
             Err(anyhow!("type '{}' already exists", name.bright_yellow()))
@@ -98,6 +107,19 @@ impl TypeConfig {
                 None => error!("type '{}' does not exist", name.bright_yellow()),
             }
         }
+    }
+
+    /// Execute a script with arguments, returning stdout.
+    pub fn execute(&self, script: &str, args: Box<[String]>) -> Result<String> {
+        let ext = match self.types.get(script) {
+            Some(prop) => &prop.ext,
+            None => return Err(anyhow!("type '{}' does not exist", script.bright_yellow())),
+        };
+        let output = std::process::Command::new(format!("{}.{}", script, ext))
+            .current_dir(SCRIPT_ROOT.as_path())
+            .args(&*args)
+            .output()?;
+        Ok(String::from_utf8(output.stdout)?)
     }
 }
 
@@ -121,18 +143,50 @@ impl fmt::Display for TypeConfig {
             .unwrap();
         }
         tw.flush().unwrap();
-        let result = String::from_utf8(tw.into_inner().unwrap()).unwrap();
-        write!(f, "{}", result)
+        write!(
+            f,
+            "{}",
+            String::from_utf8(tw.into_inner().unwrap()).unwrap()
+        )
     }
 }
 
 #[derive(Debug)]
 pub struct TypeProp {
     pub ext: String,
+    pub return_type: ReturnType,
 }
 
 impl TypeProp {
-    pub fn new(ext: String) -> Self {
-        Self { ext }
+    pub fn new(ext: String, return_type: ReturnType) -> Self {
+        Self { ext, return_type }
+    }
+}
+
+#[derive(Clone, Debug)]
+/// What to except in script stdout.
+pub enum ReturnType {
+    Url,
+    None,
+}
+
+impl std::str::FromStr for ReturnType {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
+            "url" => Ok(Self::Url),
+            "none" => Ok(Self::None),
+            _ => Err(anyhow!("invalid return type")),
+        }
+    }
+}
+
+impl fmt::Display for ReturnType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Url => write!(f, "url"),
+            Self::None => write!(f, "none"),
+        }
     }
 }
