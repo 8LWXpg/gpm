@@ -6,19 +6,18 @@ mod type_config;
 use main_config::Config;
 use type_config::ReturnType;
 
-use clap::builder::styling;
-use clap::{Args, Parser, Subcommand};
+use clap::{builder::styling, Args, Parser, Subcommand};
 use colored::{ColoredString, Colorize};
 use once_cell::sync::Lazy;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process;
 use type_config::TypeConfig;
 
 static GPM_HOME: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap().join(".gpm"));
 static GPM_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("config.toml"));
 /// config for each repository
-static NAMESPACES_CONFIG: &str = "version.toml";
-static NAMESPACES_PATH: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("repositories"));
+static REPO_CONFIG: &str = "version.toml";
+static REPO_PATH: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("repositories"));
 static SCRIPT_ROOT: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("scripts"));
 static TYPES_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("types.toml"));
 
@@ -63,7 +62,7 @@ enum TopCommand {
     List,
 
     /// Manage packages in a repository
-    #[clap(visible_alias = "n")]
+    #[clap(visible_alias = "r")]
     #[command(arg_required_else_help = true)]
     Repository(Repository),
 
@@ -201,7 +200,7 @@ fn main() {
         TopCommand::Add { name, path } => match Config::load() {
             Ok(mut gpm_cfg) => {
                 gpm_cfg
-                    .add(name, &path.unwrap_or(NAMESPACES_PATH.join(&name)))
+                    .add(name.clone(), &path.unwrap_or(REPO_PATH.join(&name)))
                     .unwrap_or_else(error_exit0);
                 gpm_cfg.save().unwrap_or_else(error_exit0);
             }
@@ -215,9 +214,61 @@ fn main() {
             Err(e) => error_exit0(e),
         },
         TopCommand::List => print!("{}", Config::load().unwrap_or_default()),
-        TopCommand::Repository(ns) => {
-            // TODO: Implement repository command
-        }
+        TopCommand::Repository(repo) => match repo.command {
+            RepositoryCommand::Add { name, r#type, args } => {
+                let repo_cfg_path = &REPO_PATH.join(&name).join(REPO_CONFIG);
+                match repository_config::Config::load(repo_cfg_path) {
+                    Ok(mut repo_cfg) => {
+                        repo_cfg
+                            .add(name, r#type, args.into_boxed_slice())
+                            .unwrap_or_else(error_exit0);
+                        repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
+                    }
+                    Err(e) => error_exit0(e),
+                }
+            }
+            RepositoryCommand::Remove { name } => {
+                let repo_cfg_path = &REPO_PATH.join(&repo.name).join(REPO_CONFIG);
+                match repository_config::Config::load(repo_cfg_path) {
+                    Ok(mut repo_cfg) => {
+                        repo_cfg.remove(name);
+                        repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
+                    }
+                    Err(e) => error_exit0(e),
+                }
+            }
+            RepositoryCommand::Update { name, all } => {
+                let repo_cfg_path = &REPO_PATH.join(&repo.name).join(REPO_CONFIG);
+                match repository_config::Config::load(repo_cfg_path) {
+                    Ok(mut repo_cfg) => {
+                        if all {
+                            repo_cfg.update_all();
+                        } else {
+                            repo_cfg.update(name);
+                            repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
+                        }
+                    }
+                    Err(e) => error_exit0(e),
+                }
+            }
+            RepositoryCommand::Clone { name } => {
+                let repo_cfg_path = &REPO_PATH.join(&repo.name).join(REPO_CONFIG);
+                match repository_config::Config::load(repo_cfg_path) {
+                    Ok(repo_cfg) => {
+                        repo_cfg.copy(name);
+                        repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
+                    }
+                    Err(e) => error_exit0(e),
+                }
+            }
+            RepositoryCommand::List => {
+                let repo_cfg_path = &REPO_PATH.join(&repo.name).join(REPO_CONFIG);
+                match repository_config::Config::load(repo_cfg_path) {
+                    Ok(repo_cfg) => println!("{}", repo_cfg.print()),
+                    Err(e) => error_exit0(e),
+                }
+            }
+        },
         TopCommand::Type(t) => match t {
             TypeCommand::Add { name, ext, ret } => match TypeConfig::load() {
                 Ok(mut type_cfg) => {

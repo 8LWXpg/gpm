@@ -1,7 +1,7 @@
 //! Handling main configuration file at GPM_CONFIG.
 
 use crate::repository_config;
-use crate::{error, GPM_CONFIG, NAMESPACES_CONFIG, NAMESPACES_PATH};
+use crate::{error, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 
 use anyhow::{anyhow, Result};
 use colored::Colorize;
@@ -50,7 +50,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             repositories: HashMap::new(),
         }
@@ -146,18 +146,18 @@ impl fmt::Display for Config {
 }
 
 /// Property of a repository in the GPM configuration.
-struct RepositoryProp {
+pub struct RepositoryProp {
     /// Full path to the repository directory
     path: Box<Path>,
 }
 
 impl RepositoryProp {
-    pub fn new(path: &Path) -> Result<Self> {
+    fn new(path: &Path) -> Result<Self> {
         fs::create_dir_all(path)?;
-        let cfg_path = path.join(NAMESPACES_CONFIG);
+        let cfg_path = path.join(REPO_CONFIG);
         repository_config::Config::new().save(&cfg_path)?;
         Ok(Self {
-            path: NAMESPACES_PATH.join(path).into_boxed_path(),
+            path: REPO_PATH.join(path).into_boxed_path(),
         })
     }
 

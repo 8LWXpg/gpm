@@ -109,17 +109,27 @@ impl TypeConfig {
         }
     }
 
-    /// Execute a script with arguments, returning stdout.
-    pub fn execute(&self, script: &str, args: Box<[String]>) -> Result<String> {
+    /// Execute script with arguments, returning stdout.
+    pub fn execute(&self, script: &str, args: &[String]) -> Result<String> {
         let ext = match self.types.get(script) {
             Some(prop) => &prop.ext,
-            None => return Err(anyhow!("type '{}' does not exist", script.bright_yellow())),
+            None => {
+                return Err(anyhow!(
+                    "script '{}' does not exist",
+                    script.bright_yellow()
+                ))
+            }
         };
         let output = std::process::Command::new(format!("{}.{}", script, ext))
             .current_dir(SCRIPT_ROOT.as_path())
-            .args(&*args)
+            .args(args.iter())
             .output()?;
         Ok(String::from_utf8(output.stdout)?)
+    }
+
+    /// Execute post install script with arguments, returning stdout.
+    pub fn execute_post(&self, script: &str, args: &[String]) -> Result<String> {
+        self.execute(&format!("{}.post", script), args)
     }
 }
 
