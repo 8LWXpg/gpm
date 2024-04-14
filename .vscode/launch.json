@@ -18,10 +18,12 @@
                 }
             },
             "args": [
-                "n",
-                "test",
-                "c",
-                "exe,test"
+                "repo",
+                "exe",
+                "a",
+                "pdfcpu.exe",
+                "gh",
+                "Windows_x86_64"
             ],
             "cwd": "${workspaceFolder}"
         },

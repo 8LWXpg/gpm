@@ -1,13 +1,16 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
-use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
+use crate::{error, info, main_config, SCRIPT_ROOT, TYPES_CONFIG};
 
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::io::Write;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::Path;
+use std::process::Stdio;
 use std::{fmt, fs};
 use tabwriter::TabWriter;
 
@@ -52,11 +55,10 @@ impl TypeConfig {
 
     /// Load the configuration, or calls `new()` if it doesn't exist.
     pub fn load() -> Result<Self> {
-        let path = TYPES_CONFIG.as_path();
-        if !path.exists() {
+        if !TYPES_CONFIG.exists() {
             Ok(Self::new())
         } else {
-            toml::from_str::<TomlTypeConfig>(&fs::read_to_string(TYPES_CONFIG.as_path())?)
+            toml::from_str::<TomlTypeConfig>(&fs::read_to_string(&*TYPES_CONFIG)?)
                 .map(|c| c.into_config())
                 .map_err(Into::into)
         }
@@ -64,11 +66,7 @@ impl TypeConfig {
 
     /// Save the configuration.
     pub fn save(self) -> Result<()> {
-        fs::write(
-            TYPES_CONFIG.as_path(),
-            toml::to_string(&self.into_toml_config())?,
-        )
-        .map_err(Into::into)
+        fs::write(&*TYPES_CONFIG, toml::to_string(&self.into_toml_config())?).map_err(Into::into)
     }
 
     fn into_toml_config(self) -> TomlTypeConfig {
@@ -92,6 +90,10 @@ impl TypeConfig {
     /// Add a new type.
     pub fn add(&mut self, name: String, ext: String, ret: ReturnType) -> Result<()> {
         if let Entry::Vacant(e) = self.types.entry(name.clone()) {
+            let path = SCRIPT_ROOT.join(format!("{}.{}", name, ext));
+            if !path.exists() {
+                File::create(path)?;
+            }
             e.insert(TypeProp::new(ext, ret));
             Ok(())
         } else {
@@ -110,8 +112,8 @@ impl TypeConfig {
     }
 
     /// Execute script with arguments, returning stdout.
-    pub fn execute(&self, script: &str, args: &[String]) -> Result<String> {
-        let ext = match self.types.get(script) {
+    pub fn execute(&self, script: &str, args: &[String], repo_path: &Path) -> Result<String> {
+        let ext = match self.types.get(script.trim_end_matches(".post")) {
             Some(prop) => &prop.ext,
             None => {
                 return Err(anyhow!(
@@ -120,16 +122,38 @@ impl TypeConfig {
                 ))
             }
         };
-        let output = std::process::Command::new(format!("{}.{}", script, ext))
-            .current_dir(SCRIPT_ROOT.as_path())
-            .args(args.iter())
-            .output()?;
-        Ok(String::from_utf8(output.stdout)?)
+        let main_cfg = main_config::Config::load()?;
+        let shell = &main_cfg.shell;
+        let shell_args = &main_cfg.args;
+        let mut output = std::process::Command::new(shell)
+            .current_dir(repo_path)
+            .args(shell_args.iter())
+            .arg(SCRIPT_ROOT.join(script).with_extension(ext))
+            .args(args)
+            .stdout(Stdio::piped())
+            .spawn()?;
+
+        info!(
+            "executing script '{:?}'",
+            std::process::Command::new(shell)
+                .current_dir(repo_path)
+                .args(shell_args.iter())
+                .arg(SCRIPT_ROOT.join(script).with_extension(ext))
+                .args(args)
+        );
+        let mut out = String::new();
+        output.stdout.take().unwrap().read_to_string(&mut out)?;
+        Ok(out)
     }
 
     /// Execute post install script with arguments, returning stdout.
-    pub fn execute_post(&self, script: &str, args: &[String]) -> Result<String> {
-        self.execute(&format!("{}.post", script), args)
+    pub fn execute_post(&self, script: &str, args: &[String], repo_path: &Path) -> Result<String> {
+        let path = SCRIPT_ROOT.join(format!("{}.post.{}", script, self.types[script].ext));
+        if path.exists() {
+            self.execute(&format!("{}.post", script), args, repo_path)
+        } else {
+            Ok("".to_string())
+        }
     }
 }
 

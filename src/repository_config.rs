@@ -20,14 +20,14 @@ use tokio::runtime::Builder;
 
 // Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TomlConfig {
+struct TomlRepo {
     /// Key: package name, Value: package details
-    pub packages: HashMap<String, TomlPackage>,
+    packages: HashMap<String, TomlPackage>,
 }
 
-impl TomlConfig {
-    pub fn into_config(self) -> Config {
-        Config {
+impl TomlRepo {
+    pub fn into_config(self, path: &Path) -> Repo {
+        Repo {
             packages: self
                 .packages
                 .into_iter()
@@ -37,45 +37,56 @@ impl TomlConfig {
                         Package {
                             r#type: package.r#type,
                             args: package.args,
+                            post_args: package.post_args,
                             etag: package.etag,
                         },
                     )
                 })
                 .collect(),
             type_config: TypeConfig::load().expect("failed to load type config"),
+            path: path.into(),
         }
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TomlPackage {
-    pub r#type: String,
-    pub args: Box<[String]>,
+struct TomlPackage {
+    r#type: String,
+    args: Box<[String]>,
+    post_args: Box<[String]>,
     /// ETag for the package
-    pub etag: Option<String>,
+    etag: Option<String>,
 }
 
 #[derive(Debug)]
-pub struct Config {
+pub struct Repo {
     /// Key: package name, Value: package details
     pub packages: HashMap<String, Package>,
     type_config: TypeConfig,
+    path: Box<Path>,
 }
 
-impl Config {
+impl Repo {
     /// Create a empty config, panic if failed to load TypeConfig.
-    pub fn new() -> Self {
+    pub fn new(path: &Path) -> Self {
         Self {
             packages: HashMap::new(),
             type_config: TypeConfig::load().expect("failed to load type config"),
+            path: REPO_PATH.join(path).into_boxed_path(),
         }
     }
 
     /// Load from a TOML file at path.
     pub fn load(path: &Path) -> Result<Self> {
-        toml::from_str::<TomlConfig>(&fs::read_to_string(path)?)
-            .map(|c| c.into_config())
-            .map_err(Into::into)
+        toml::from_str::<TomlRepo>(&fs::read_to_string(path).map_err(|_| {
+            anyhow!(
+                "failed to load config at '{}', run '{}' to create a new one",
+                path.display().to_string().bright_yellow(),
+                "gpm new <repo>".bright_yellow()
+            )
+        })?)
+        .map(|c| c.into_config(path.parent().unwrap()))
+        .map_err(Into::into)
     }
 
     /// Save to a TOML file at path.
@@ -99,8 +110,8 @@ impl Config {
         String::from_utf8(tw.into_inner().unwrap()).unwrap()
     }
 
-    pub fn into_toml_config(self) -> TomlConfig {
-        TomlConfig {
+    fn into_toml_config(self) -> TomlRepo {
+        TomlRepo {
             packages: self
                 .packages
                 .into_iter()
@@ -110,6 +121,7 @@ impl Config {
                         TomlPackage {
                             r#type: package.r#type,
                             args: package.args,
+                            post_args: package.post_args,
                             etag: package.etag,
                         },
                     )
@@ -119,10 +131,16 @@ impl Config {
     }
 
     /// Add a package and execute the script.
-    pub fn add(&mut self, name: String, r#type: String, args: Box<[String]>) -> Result<()> {
+    pub fn add(
+        &mut self,
+        name: String,
+        r#type: String,
+        args: Box<[String]>,
+        post_args: Box<[String]>,
+    ) -> Result<()> {
         if let Entry::Vacant(e) = self.packages.entry(name.clone()) {
-            let mut package = Package::new(r#type, args);
-            package.add(&name, &self.type_config)?;
+            let mut package = Package::new(r#type, args, post_args);
+            package.add(&name, &self.type_config, &self.path)?;
             e.insert(package);
             Ok(())
         } else {
@@ -146,9 +164,11 @@ impl Config {
     pub fn update(&mut self, names: Vec<String>) {
         for name in names {
             match self.packages.get_mut(&name) {
-                Some(package) => package.add(&name, &self.type_config).unwrap_or_else(|e| {
-                    error!("failed to update package '{}' {}", name.bright_yellow(), e)
-                }),
+                Some(package) => package
+                    .add(&name, &self.type_config, &self.path)
+                    .unwrap_or_else(|e| {
+                        error!("failed to update package '{}' {}", name.bright_yellow(), e)
+                    }),
                 None => error!("package '{}' does not exist", name.bright_yellow()),
             }
         }
@@ -157,9 +177,11 @@ impl Config {
     /// Update all packages.
     pub fn update_all(&mut self) {
         for (name, package) in &mut self.packages {
-            package.add(name, &self.type_config).unwrap_or_else(|e| {
-                error!("failed to update package '{}' {}", name.bright_yellow(), e)
-            });
+            package
+                .add(name, &self.type_config, &self.path)
+                .unwrap_or_else(|e| {
+                    error!("failed to update package '{}' {}", name.bright_yellow(), e)
+                });
         }
     }
 
@@ -176,31 +198,27 @@ impl Config {
     }
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[derive(Debug)]
 pub struct Package {
     r#type: String,
     args: Box<[String]>,
+    post_args: Box<[String]>,
     /// ETag for the package
     etag: Option<String>,
 }
 
 impl Package {
-    pub fn new(r#type: String, args: Box<[String]>) -> Self {
+    pub fn new(r#type: String, args: Box<[String]>, post_args: Box<[String]>) -> Self {
         Self {
             r#type,
             args,
+            post_args,
             etag: None,
         }
     }
 
     /// Add package, execute the script.
-    fn add(&mut self, name: &str, type_config: &TypeConfig) -> Result<()> {
+    fn add(&mut self, name: &str, type_config: &TypeConfig, repo_path: &Path) -> Result<()> {
         let type_prop = type_config
             .types
             .get(&self.r#type)
@@ -208,19 +226,21 @@ impl Package {
         match type_prop.return_type {
             ReturnType::Url => {
                 let mut file = File::create(REPO_PATH.join(name))?;
-                let rt = Builder::new_current_thread().build()?;
+                let rt = Builder::new_current_thread().enable_io().build()?;
                 if let Some(etag) = rt.block_on(download_with_progress(
-                    type_config.execute(&self.r#type, &self.args)?.as_str(),
+                    type_config
+                        .execute(&self.r#type, &self.args, repo_path)?
+                        .as_str(),
                     &mut file,
                     self.etag.as_deref(),
                 ))? {
                     self.etag = Some(etag);
-                    type_config.execute_post(&self.r#type, &self.args)?;
+                    type_config.execute_post(&self.r#type, &self.post_args, repo_path)?;
                 }
             }
             ReturnType::None => {
-                type_config.execute(&self.r#type, &self.args)?;
-                type_config.execute_post(&self.r#type, &self.args)?;
+                type_config.execute(&self.r#type, &self.args, repo_path)?;
+                type_config.execute_post(&self.r#type, &self.post_args, repo_path)?;
             }
         }
         Ok(())
@@ -275,6 +295,7 @@ async fn download_with_progress(
                 .get(header::ETAG)
                 .map(|etag| etag.to_str().unwrap().to_owned());
 
+            println!("Downloading '{}'", url);
             match &response.content_length() {
                 Some(len) => {
                     let bar = ProgressBar::new(*len);

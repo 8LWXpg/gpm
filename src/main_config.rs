@@ -18,6 +18,8 @@ use tabwriter::TabWriter;
 struct TomlConfig {
     /// Key: repository name, Value: repository properties
     repositories: HashMap<String, TomlRepositoryProp>,
+    shell: String,
+    args: Box<[String]>,
 }
 
 impl TomlConfig {
@@ -34,6 +36,8 @@ impl TomlConfig {
                     )
                 })
                 .collect(),
+            shell: self.shell,
+            args: self.args,
         }
     }
 }
@@ -47,22 +51,36 @@ struct TomlRepositoryProp {
 /// GPM configuration.
 pub struct Config {
     pub repositories: HashMap<String, RepositoryProp>,
+    pub shell: String,
+    pub args: Box<[String]>,
 }
 
 impl Config {
     fn new() -> Self {
-        Self {
-            repositories: HashMap::new(),
+        #[cfg(target_os = "windows")]
+        {
+            Self {
+                repositories: HashMap::new(),
+                shell: "powershell".to_string(),
+                args: vec!["-c".to_string()].into_boxed_slice(),
+            }
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            Self {
+                repositories: HashMap::new(),
+                shell: "sh".to_string(),
+                args: vec!["-c".to_string()].into_boxed_slice(),
+            }
         }
     }
 
     /// Load the configuration, or calls `new()` if it doesn't exist.
     pub fn load() -> Result<Self> {
-        let path = GPM_CONFIG.as_path();
-        if !path.exists() {
+        if !GPM_CONFIG.exists() {
             Ok(Self::new())
         } else {
-            toml::from_str::<TomlConfig>(&fs::read_to_string(path)?)
+            toml::from_str::<TomlConfig>(&fs::read_to_string(&*GPM_CONFIG)?)
                 .map(|c| c.into_config())
                 .map_err(Into::into)
         }
@@ -70,11 +88,7 @@ impl Config {
 
     /// Save the configuration.
     pub fn save(self) -> Result<()> {
-        fs::write(
-            GPM_CONFIG.as_path(),
-            toml::to_string(&self.into_toml_config())?,
-        )
-        .map_err(Into::into)
+        fs::write(&*GPM_CONFIG, toml::to_string(&self.into_toml_config())?).map_err(Into::into)
     }
 
     fn into_toml_config(self) -> TomlConfig {
@@ -91,6 +105,8 @@ impl Config {
                     )
                 })
                 .collect(),
+            shell: self.shell,
+            args: self.args,
         }
     }
 
@@ -120,12 +136,6 @@ impl Config {
     }
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl fmt::Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut tw = TabWriter::new(vec![]);
@@ -145,6 +155,12 @@ impl fmt::Display for Config {
     }
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Property of a repository in the GPM configuration.
 pub struct RepositoryProp {
     /// Full path to the repository directory
@@ -155,7 +171,7 @@ impl RepositoryProp {
     fn new(path: &Path) -> Result<Self> {
         fs::create_dir_all(path)?;
         let cfg_path = path.join(REPO_CONFIG);
-        repository_config::Config::new().save(&cfg_path)?;
+        repository_config::Repo::new(path).save(&cfg_path)?;
         Ok(Self {
             path: REPO_PATH.join(path).into_boxed_path(),
         })
