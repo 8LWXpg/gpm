@@ -18,8 +18,6 @@ use tabwriter::TabWriter;
 struct TomlConfig {
     /// Key: repository name, Value: repository properties
     repositories: HashMap<String, TomlRepositoryProp>,
-    shell: String,
-    args: Box<[String]>,
 }
 
 impl TomlConfig {
@@ -36,8 +34,6 @@ impl TomlConfig {
                     )
                 })
                 .collect(),
-            shell: self.shell,
-            args: self.args,
         }
     }
 }
@@ -51,27 +47,12 @@ struct TomlRepositoryProp {
 /// GPM configuration.
 pub struct Config {
     pub repositories: HashMap<String, RepositoryProp>,
-    pub shell: String,
-    pub args: Box<[String]>,
 }
 
 impl Config {
     fn new() -> Self {
-        #[cfg(target_os = "windows")]
-        {
-            Self {
-                repositories: HashMap::new(),
-                shell: "powershell".to_string(),
-                args: vec!["-c".to_string()].into_boxed_slice(),
-            }
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            Self {
-                repositories: HashMap::new(),
-                shell: "sh".to_string(),
-                args: vec!["-c".to_string()].into_boxed_slice(),
-            }
+        Self {
+            repositories: HashMap::new(),
         }
     }
 
@@ -105,8 +86,6 @@ impl Config {
                     )
                 })
                 .collect(),
-            shell: self.shell,
-            args: self.args,
         }
     }
 

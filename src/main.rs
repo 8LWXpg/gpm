@@ -3,14 +3,15 @@ mod main_config;
 mod repository_config;
 mod type_config;
 
+use clap::CommandFactory;
 use main_config::Config;
-use type_config::ReturnType;
 
 use clap::{builder::styling, Args, Parser, Subcommand};
+use clap_complete::{Generator, Shell};
 use colored::Colorize;
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
-use std::{fs, process};
+use std::{fs, io, process};
 use type_config::TypeConfig;
 
 static GPM_HOME: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap().join(".gpm"));
@@ -74,6 +75,12 @@ enum TopCommand {
     #[clap(subcommand, visible_alias = "t")]
     #[command(arg_required_else_help = true)]
     Type(TypeCommand),
+
+    /// Generate shell completion scripts
+    Generate {
+        /// The shell to generate the completion script for
+        shell: Shell,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -99,10 +106,6 @@ enum RepositoryCommand {
 
         /// Args get passed to the script
         args: Vec<String>,
-
-        /// Args get passed to the script.post
-        #[arg(short, long)]
-        post_args: Vec<String>,
     },
 
     /// Remove packages in the repository
@@ -152,9 +155,6 @@ enum TypeCommand {
 
         /// Script file extension
         ext: String,
-
-        /// Return type
-        ret: ReturnType,
     },
 
     /// Remove package types
@@ -190,17 +190,6 @@ macro_rules! error {
     };
     ($fmt:expr, $($arg:tt)*) => {
         eprintln!("{} {}", "error:".bright_red().bold(), format!($fmt, $($arg)*))
-    };
-}
-
-/// Print info message to stdout.
-#[macro_export]
-macro_rules! info {
-    ($msg:expr) => {
-        println!("{} {}", "info:".bright_blue(), $msg)
-    };
-    ($fmt:expr, $($arg:tt)*) => {
-        println!("{} {}", "info:".bright_blue(), format!($fmt, $($arg)*))
     };
 }
 
@@ -245,22 +234,12 @@ fn main() {
         },
         TopCommand::List => print!("{}", Config::load().unwrap_or_default()),
         TopCommand::Repo(repo) => match repo.command {
-            RepositoryCommand::Add {
-                name,
-                r#type,
-                args,
-                post_args,
-            } => {
+            RepositoryCommand::Add { name, r#type, args } => {
                 let repo_cfg_path = &REPO_PATH.join(&repo.name).join(REPO_CONFIG);
                 match repository_config::Repo::load(repo_cfg_path) {
                     Ok(mut repo_cfg) => {
                         repo_cfg
-                            .add(
-                                name,
-                                r#type,
-                                args.into_boxed_slice(),
-                                post_args.into_boxed_slice(),
-                            )
+                            .add(name, r#type, args.into_boxed_slice())
                             .unwrap_or_else(error_exit0);
                         repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
                     }
@@ -285,8 +264,8 @@ fn main() {
                             repo_cfg.update_all();
                         } else {
                             repo_cfg.update(name);
-                            repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
                         }
+                        repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
                     }
                     Err(e) => error_exit0(e),
                 }
@@ -310,9 +289,9 @@ fn main() {
             }
         },
         TopCommand::Type(t) => match t {
-            TypeCommand::Add { name, ext, ret } => match TypeConfig::load() {
+            TypeCommand::Add { name, ext } => match TypeConfig::load() {
                 Ok(mut type_cfg) => {
-                    type_cfg.add(name, ext, ret).unwrap_or_else(error_exit0);
+                    type_cfg.add(name, ext).unwrap_or_else(error_exit0);
                     type_cfg.save().unwrap_or_else(error_exit0);
                 }
                 Err(e) => error_exit0(e),
@@ -326,5 +305,8 @@ fn main() {
             },
             TypeCommand::List => print!("{}", TypeConfig::load().unwrap_or_default()),
         },
+        TopCommand::Generate { shell } => {
+            clap_complete::generate(shell, &mut App::command(), "gpm", &mut io::stdout())
+        }
     }
 }

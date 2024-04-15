@@ -1,6 +1,6 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
-use crate::{error, info, main_config, SCRIPT_ROOT, TYPES_CONFIG};
+use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
 
 use anyhow::{anyhow, Result};
 use colored::Colorize;
@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Write;
+use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::process::Stdio;
 use std::{fmt, fs};
@@ -19,6 +20,8 @@ use tabwriter::TabWriter;
 struct TomlTypeConfig {
     /// Key: type name, Value: type properties
     types: HashMap<String, TomlTypeProp>,
+    shell: String,
+    args: Box<[String]>,
 }
 
 impl TomlTypeConfig {
@@ -27,8 +30,10 @@ impl TomlTypeConfig {
             types: self
                 .types
                 .into_iter()
-                .map(|(name, ns)| (name, TypeProp::new(ns.ext, ns.return_type.parse().unwrap())))
+                .map(|(name, type_prop)| (name, TypeProp::new(type_prop.ext)))
                 .collect(),
+            shell: self.shell,
+            args: self.args,
         }
     }
 }
@@ -36,7 +41,6 @@ impl TomlTypeConfig {
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlTypeProp {
     ext: String,
-    return_type: String,
 }
 
 /// Configuration for package types.
@@ -44,12 +48,19 @@ struct TomlTypeProp {
 pub struct TypeConfig {
     /// Key: type name, Value: type properties
     pub types: HashMap<String, TypeProp>,
+    shell: String,
+    args: Box<[String]>,
 }
 
 impl TypeConfig {
     pub fn new() -> Self {
-        Self {
-            types: HashMap::new(),
+        #[cfg(target_os = "windows")]
+        {
+            Self {
+                types: HashMap::new(),
+                shell: "powershell".into(),
+                args: Box::new(["-c".into()]),
+            }
         }
     }
 
@@ -74,27 +85,21 @@ impl TypeConfig {
             types: self
                 .types
                 .into_iter()
-                .map(|(name, ns)| {
-                    (
-                        name,
-                        TomlTypeProp {
-                            ext: ns.ext,
-                            return_type: ns.return_type.to_string(),
-                        },
-                    )
-                })
+                .map(|(name, type_prop)| (name, TomlTypeProp { ext: type_prop.ext }))
                 .collect(),
+            shell: self.shell,
+            args: self.args,
         }
     }
 
     /// Add a new type.
-    pub fn add(&mut self, name: String, ext: String, ret: ReturnType) -> Result<()> {
+    pub fn add(&mut self, name: String, ext: String) -> Result<()> {
         if let Entry::Vacant(e) = self.types.entry(name.clone()) {
             let path = SCRIPT_ROOT.join(format!("{}.{}", name, ext));
             if !path.exists() {
                 File::create(path)?;
             }
-            e.insert(TypeProp::new(ext, ret));
+            e.insert(TypeProp::new(ext));
             Ok(())
         } else {
             Err(anyhow!("type '{}' already exists", name.bright_yellow()))
@@ -112,47 +117,75 @@ impl TypeConfig {
     }
 
     /// Execute script with arguments, returning stdout.
-    pub fn execute(&self, script: &str, args: &[String], repo_path: &Path) -> Result<String> {
-        let ext = match self.types.get(script.trim_end_matches(".post")) {
+    pub fn execute(
+        &self,
+        type_name: &str,
+        name: &str,
+        repo_path: &Path,
+        etag: Option<&str>,
+        args: &[String],
+    ) -> Result<String> {
+        let ext = match self.types.get(type_name) {
             Some(prop) => &prop.ext,
             None => {
                 return Err(anyhow!(
-                    "script '{}' does not exist",
-                    script.bright_yellow()
+                    "type '{}' does not exist",
+                    type_name.bright_yellow()
                 ))
             }
         };
-        let main_cfg = main_config::Config::load()?;
-        let shell = &main_cfg.shell;
-        let shell_args = &main_cfg.args;
-        let mut output = std::process::Command::new(shell)
-            .current_dir(repo_path)
-            .args(shell_args.iter())
-            .arg(SCRIPT_ROOT.join(script).with_extension(ext))
-            .args(args)
+
+        let mut cmd = std::process::Command::new(&self.shell);
+        #[cfg(target_os = "windows")]
+        {
+            cmd.current_dir(repo_path)
+                .args(self.args.iter())
+                .arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
+                .arg("-name")
+                .arg(name)
+                .arg("-dest")
+                .arg(repo_path);
+            if let Some(etag) = etag {
+                match self.shell.as_str() {
+                    "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe" => {
+                        cmd.arg("-etag")
+                            // escaping double quote for powershell https://stackoverflow.com/a/59681993
+                            .raw_arg(format!("'{}'", etag.replace('"', "\\\"")))
+                            .args(args);
+                    }
+                    _ => {
+                        cmd.arg("-etag").arg(etag).args(args);
+                    }
+                }
+            } else {
+                cmd.args(args);
+            }
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            cmd.current_dir(repo_path)
+                .args(self.args.iter())
+                .arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
+                .arg("-name")
+                .arg(name)
+                .arg("-dest")
+                .arg(repo_path);
+            if let Some(etag) = etag {
+                cmd.arg("-etag").arg(etag).args(args);
+            } else {
+                cmd.args(args);
+            }
+        }
+        println!("{} {:?}", "executing:".bright_blue(), cmd);
+        let output = cmd
+            .stdin(Stdio::inherit())
             .stdout(Stdio::piped())
-            .spawn()?;
-
-        info!(
-            "executing script '{:?}'",
-            std::process::Command::new(shell)
-                .current_dir(repo_path)
-                .args(shell_args.iter())
-                .arg(SCRIPT_ROOT.join(script).with_extension(ext))
-                .args(args)
-        );
-        let mut out = String::new();
-        output.stdout.take().unwrap().read_to_string(&mut out)?;
-        Ok(out)
-    }
-
-    /// Execute post install script with arguments, returning stdout.
-    pub fn execute_post(&self, script: &str, args: &[String], repo_path: &Path) -> Result<String> {
-        let path = SCRIPT_ROOT.join(format!("{}.post.{}", script, self.types[script].ext));
-        if path.exists() {
-            self.execute(&format!("{}.post", script), args, repo_path)
-        } else {
+            .stderr(Stdio::inherit())
+            .output()?;
+        if output.stdout.is_empty() {
             Ok("".to_string())
+        } else {
+            Ok(String::from_utf8(output.stdout)?.trim().to_string())
         }
     }
 }
@@ -188,39 +221,10 @@ impl fmt::Display for TypeConfig {
 #[derive(Debug)]
 pub struct TypeProp {
     pub ext: String,
-    pub return_type: ReturnType,
 }
 
 impl TypeProp {
-    pub fn new(ext: String, return_type: ReturnType) -> Self {
-        Self { ext, return_type }
-    }
-}
-
-#[derive(Clone, Debug)]
-/// What to except in script stdout.
-pub enum ReturnType {
-    Url,
-    None,
-}
-
-impl std::str::FromStr for ReturnType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        match s {
-            "url" => Ok(Self::Url),
-            "none" => Ok(Self::None),
-            _ => Err(anyhow!("invalid return type")),
-        }
-    }
-}
-
-impl fmt::Display for ReturnType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Url => write!(f, "url"),
-            Self::None => write!(f, "none"),
-        }
+    pub fn new(ext: String) -> Self {
+        Self { ext }
     }
 }
