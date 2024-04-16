@@ -9,10 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::env::current_dir;
-use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::Path;
+use std::{fmt, fs};
 
 // Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
@@ -87,22 +87,6 @@ impl Repo {
     /// Save to a TOML file at path.
     pub fn save(self, path: &Path) -> Result<()> {
         fs::write(path, toml::to_string(&self.into_toml_config())?).map_err(Into::into)
-    }
-
-    pub fn print(&self) -> String {
-        let mut tw = tabwriter::TabWriter::new(vec![]);
-        for (name, package) in &self.packages {
-            writeln!(
-                &mut tw,
-                "  {}\t{}\t{}",
-                name.bright_cyan(),
-                package.r#type.bright_purple(),
-                package.args.join(" ")
-            )
-            .unwrap();
-        }
-        tw.flush().unwrap();
-        String::from_utf8(tw.into_inner().unwrap()).unwrap()
     }
 
     fn into_toml_config(self) -> TomlRepo {
@@ -183,6 +167,28 @@ impl Repo {
                 None => error!("package '{}' does not exist", name.bright_yellow()),
             }
         }
+    }
+}
+
+impl fmt::Display for Repo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut tw = tabwriter::TabWriter::new(vec![]);
+        for (name, package) in &self.packages {
+            writeln!(
+                &mut tw,
+                "  {}\t{}\t{}",
+                name.bright_cyan(),
+                package.r#type.bright_purple(),
+                package.args.join(" ")
+            )
+            .unwrap();
+        }
+        tw.flush().unwrap();
+        write!(
+            f,
+            "{}",
+            String::from_utf8(tw.into_inner().unwrap()).unwrap()
+        )
     }
 }
 

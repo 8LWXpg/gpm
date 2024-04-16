@@ -20,8 +20,7 @@
             "args": [
                 "repo",
                 "exe",
-                "u",
-                "-a"
+                "l"
             ],
             "cwd": "${workspaceFolder}"
         },
