@@ -2,6 +2,13 @@
 
 use std::{ffi::OsStr, os::windows::process::CommandExt, process::Command};
 
+/// What this does is basically wrap the string in single quotes and escape any double quote with a backslash.
+///
+/// Definitely will have unexpected results if the string contains a single quote, but I'm leaving that for now.
+///
+/// Let's just hope it will be easier to escape than CMD.
+///
+/// https://stackoverflow.com/a/59681993
 pub fn escape_pwsh(s: &str) -> String {
     format!("'{}'", s.replace('"', "\\\""))
 }
