@@ -16,6 +16,35 @@ cargo install --git https://github.com/8LWXpg/gpm.git
 gpm init
 ```
 
+### Add a new package type
+
+```bash
+gpm type add <NAME> <EXT>
+```
+
+Change your shell config at `~/.gpm/types.toml`.
+
+> [!NOTE]
+> `EXT` is the file extension of the script file.
+
+### Edit the script
+
+Script file is located at `~/.gpm/scripts/<NAME>.<EXT>`, see [here](./docs/type.md) for more information.
+
+### Add a new repository
+
+```bash
+gpm add <NAME> 
+```
+
+For more information see [here](./docs/repo.md).
+
+### Add a package to the repository
+
+```bash
+gpm repo <NAME> add <NAME> <TYPE> [ARGS]...
+```
+
 ## Commands
 
 Read the [commands](docs/commands.md) documentation for more information.
