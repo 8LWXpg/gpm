@@ -20,7 +20,8 @@
             "args": [
                 "repo",
                 "exe",
-                "l"
+                "c",
+                "pdfcpu.exe"
             ],
             "cwd": "${workspaceFolder}"
         },

@@ -161,7 +161,7 @@ impl Repo {
     pub fn copy(&self, names: Vec<String>) {
         for name in names {
             match self.packages.get(&name) {
-                Some(package) => package.copy(&name).unwrap_or_else(|e| {
+                Some(package) => package.copy(&self.path, &name).unwrap_or_else(|e| {
                     error!("failed to copy package '{}' {}", name.bright_yellow(), e)
                 }),
                 None => error!("package '{}' does not exist", name.bright_yellow()),
@@ -240,13 +240,13 @@ impl Package {
         Ok(())
     }
 
-    fn copy(&self, name: &str) -> Result<()> {
-        let path = REPO_PATH.join(name);
+    fn copy(&self, repo_path: &Path, name: &str) -> Result<()> {
+        let from = repo_path.join(name);
         let to = current_dir()?.join(name);
-        if fs::metadata(&path)?.is_dir() {
-            copy_dir_all(REPO_PATH.join(name), path)?;
+        if fs::metadata(&from)?.is_dir() {
+            copy_dir_all(from, to)?;
         } else {
-            fs::copy(path, to)?;
+            fs::copy(from, to)?;
         }
         Ok(())
     }
