@@ -45,6 +45,12 @@ For more information see [here](./docs/repo.md).
 gpm repo <NAME> add <NAME> <TYPE> [ARGS]...
 ```
 
+### Make a alias for the repo
+
+```bash
+alias <NAME>='gpm repo <NAME>'
+```
+
 ## Commands
 
 Read the [commands](docs/commands.md) documentation for more information.
