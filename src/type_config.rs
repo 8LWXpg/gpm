@@ -1,5 +1,6 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
+use crate::escape_win::EscapePwsh;
 use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
 
 use anyhow::{anyhow, Result};
@@ -136,29 +137,33 @@ impl TypeConfig {
         };
 
         let mut cmd = std::process::Command::new(&self.shell);
+        cmd.current_dir(repo_path).args(self.args.iter());
         #[cfg(target_os = "windows")]
         {
-            cmd.current_dir(repo_path)
-                .args(self.args.iter())
-                .arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
-                .arg("-name")
-                .arg(name)
-                .arg("-dest")
-                .arg(repo_path);
-            if let Some(etag) = etag {
-                match self.shell.as_str() {
-                    "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe" => {
-                        cmd.arg("-etag")
-                            // escaping double quote for powershell https://stackoverflow.com/a/59681993
-                            .raw_arg(format!("'{}'", etag.replace('"', "\\\"")))
-                            .args(args);
+            match self.shell.as_str() {
+                "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe" => {
+                    cmd.raw_arg("&")
+                        .arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(ext))
+                        .arg("-name")
+                        .arg_pwsh(name)
+                        .arg("-dest")
+                        .arg_pwsh(repo_path);
+                    if let Some(etag) = etag {
+                        cmd.arg_pwsh("-etag").arg_pwsh(etag);
                     }
-                    _ => {
-                        cmd.arg("-etag").arg(etag).args(args);
-                    }
+                    cmd.args_pwsh(args);
                 }
-            } else {
-                cmd.args(args);
+                _ => {
+                    cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
+                        .arg("-name")
+                        .arg(name)
+                        .arg("-dest")
+                        .arg(repo_path);
+                    if let Some(etag) = etag {
+                        cmd.arg("-etag").arg(etag);
+                    }
+                    cmd.args(args);
+                }
             }
         }
         #[cfg(not(target_os = "windows"))]
@@ -171,10 +176,9 @@ impl TypeConfig {
                 .arg("-dest")
                 .arg(repo_path);
             if let Some(etag) = etag {
-                cmd.arg("-etag").arg(etag).args(args);
-            } else {
-                cmd.args(args);
+                cmd.arg("-etag").arg(etag);
             }
+            cmd.args(args);
         }
         println!("{} {:?}", "executing:".bright_blue(), cmd);
         let output = cmd

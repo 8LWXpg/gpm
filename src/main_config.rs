@@ -26,10 +26,10 @@ impl TomlConfig {
             repositories: self
                 .repositories
                 .into_iter()
-                .map(|(name, ns)| {
+                .map(|(name, repo)| {
                     (
                         name,
-                        RepositoryProp::new(Path::new(&*ns.path))
+                        RepositoryProp::new(Path::new(&*repo.path))
                             .expect("failed to create repository"),
                     )
                 })
@@ -160,4 +160,14 @@ impl RepositoryProp {
         fs::remove_dir_all(&self.path)?;
         Ok(())
     }
+}
+
+pub fn get_repo_path(name: &str) -> Box<Path> {
+    Config::load()
+        .unwrap_or_default()
+        .repositories
+        .get(name)
+        .unwrap()
+        .path
+        .clone()
 }
