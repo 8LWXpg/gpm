@@ -106,10 +106,11 @@ impl Config {
     /// Remove repositories from the configuration.
     pub fn remove(&mut self, names: Vec<String>) {
         for name in names {
-            match self.repositories.remove(&name) {
-                Some(ns) => ns.remove().unwrap_or_else(|e| {
-                    error!("failed to remove package '{}' {}", name.bright_yellow(), e)
-                }),
+            match self.repositories.get(&name) {
+                Some(repo) => match repo.remove() {
+                    Ok(()) => _ = self.repositories.remove(&name),
+                    Err(e) => error!("failed to remove package '{}' {}", name.bright_yellow(), e),
+                },
                 None => error!("repository '{}' does not exist", name.bright_yellow()),
             }
         }

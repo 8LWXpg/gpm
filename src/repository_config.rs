@@ -122,10 +122,11 @@ impl Repo {
     /// Remove packages.
     pub fn remove(&mut self, names: Vec<String>) {
         for name in names {
-            match self.packages.remove(&name) {
-                Some(package) => package.remove(&name, &self.path).unwrap_or_else(|e| {
-                    error!("failed to remove package '{}' {}", name.bright_yellow(), e)
-                }),
+            match self.packages.get(&name) {
+                Some(package) => match package.remove(&name, &self.path) {
+                    std::result::Result::Ok(()) => _ = self.packages.remove(&name),
+                    Err(e) => error!("failed to remove package '{}' {}", name.bright_yellow(), e),
+                },
                 None => error!("package '{}' does not exist", name.bright_yellow()),
             }
         }
