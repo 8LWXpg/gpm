@@ -29,8 +29,9 @@ impl TomlConfig {
                 .map(|(name, repo)| {
                     (
                         name,
-                        RepositoryProp::new(Path::new(&*repo.path))
-                            .expect("failed to create repository"),
+                        RepositoryProp {
+                            path: Path::new(&*repo.path).into(),
+                        },
                     )
                 })
                 .collect(),
@@ -147,6 +148,7 @@ pub struct RepositoryProp {
 }
 
 impl RepositoryProp {
+    /// Create a new repository property, creating the repository directory and configuration file.
     fn new(path: &Path) -> Result<Self> {
         fs::create_dir_all(path)?;
         let cfg_path = path.join(REPO_CONFIG);

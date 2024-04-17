@@ -75,9 +75,8 @@ impl Repo {
     pub fn load(path: &Path) -> Result<Self> {
         toml::from_str::<TomlRepo>(&fs::read_to_string(path).map_err(|_| {
             anyhow!(
-                "failed to load config at '{}', run '{}' to create a new one",
+                "failed to load config at '{}'",
                 path.display().to_string().bright_yellow(),
-                "gpm new <repo>".bright_yellow()
             )
         })?)
         .map(|c| c.into_config(path.parent().unwrap()))

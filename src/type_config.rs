@@ -10,7 +10,6 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
-use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::process::Stdio;
 use std::{fmt, fs};
@@ -142,14 +141,14 @@ impl TypeConfig {
         {
             match self.shell.as_str() {
                 "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe" => {
-                    cmd.raw_arg("&")
+                    cmd.arg("&")
                         .arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(ext))
                         .arg("-name")
                         .arg_pwsh(name)
                         .arg("-dest")
                         .arg_pwsh(repo_path);
                     if let Some(etag) = etag {
-                        cmd.arg_pwsh("-etag").arg_pwsh(etag);
+                        cmd.arg("-etag").arg_pwsh(etag);
                     }
                     cmd.args_pwsh(args);
                 }
