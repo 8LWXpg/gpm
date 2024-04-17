@@ -29,7 +29,7 @@ Change your shell config at `~/.gpm/types.toml`.
 
 ### Edit the script
 
-Script file is located at `~/.gpm/scripts/<NAME>.<EXT>`, see [here](./docs/type.md) for more information.
+Script file is created at `~/.gpm/scripts/<NAME>.<EXT>`, see [here](./docs/type.md) for more information.
 
 ### Add a new repository
 
