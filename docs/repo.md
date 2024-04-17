@@ -38,6 +38,9 @@ Options:
   -h, --help  Print help
 ```
 
+> [!IMPORTANT]
+> Package name must be the same as file/folder name to work properly.
+
 ### `remove`
 
 Remove packages in the repository, space separated.

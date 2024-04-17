@@ -1,6 +1,6 @@
 # Scripts
 
-Share your scripts here.
+Share your scripts here!
 
 ## PowerShell
 

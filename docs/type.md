@@ -29,6 +29,7 @@ As mentioned above, a package type is a script file that is executed by `gpm`. H
 
 - The script must able to receive arguments described above.
 - The script must return an etag in `stdout` if it is available, or an empty string if it is not.
+- The resulted file/folder must be the same name as the package name. For example, if the package name is `test`, the resulted file/folder must be `test` at repository root.
 
 ### Example
 
