@@ -123,7 +123,7 @@ impl Repo {
     pub fn remove(&mut self, names: Vec<String>) {
         for name in names {
             match self.packages.remove(&name) {
-                Some(package) => package.remove(&name).unwrap_or_else(|e| {
+                Some(package) => package.remove(&name, &self.path).unwrap_or_else(|e| {
                     error!("failed to remove package '{}' {}", name.bright_yellow(), e)
                 }),
                 None => error!("package '{}' does not exist", name.bright_yellow()),
@@ -224,8 +224,8 @@ impl Package {
         Ok(())
     }
 
-    fn remove(&self, name: &str) -> Result<()> {
-        let path = REPO_PATH.join(name);
+    fn remove(&self, name: &str, repo_path: &Path) -> Result<()> {
+        let path = repo_path.join(name);
         match fs::metadata(&path) {
             io::Result::Ok(meta) => {
                 if meta.is_dir() {
