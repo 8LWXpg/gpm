@@ -51,6 +51,9 @@ gpm repo <NAME> add <NAME> <TYPE> [ARGS]...
 alias <NAME>='gpm repo <NAME>'
 ```
 
-## Commands
+## Documentation
 
-Read the [commands](docs/commands.md) documentation for more information.
+- [Commands](./docs/commands.md)
+- [Repo](./docs/repo.md)
+- [Type](./docs/type.md)
+- [Script Example](./docs/script.md)

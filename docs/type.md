@@ -32,7 +32,7 @@ As mentioned above, a package type is a script file that is executed by `gpm`. H
 
 ### Example
 
-- [My script backup (PowerShell)]([TODO](https://github.com/8LWXpg/gpm_scripts))
+Check [script.md](./script.md)
 
 ## Commands
 
