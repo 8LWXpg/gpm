@@ -16,19 +16,19 @@ args = ["-c"]
 ext = "ps1"
 ```
 
-If you execute `gpm repo <NAME> add <PACKAGE> gh [ARGS]...`, `gpm` will execute `pwsh -c gh.ps1` with following arguments:
+If you execute `gpm repo <NAME> add <PACKAGE> gh [ARGS]...`, `gpm` will execute `pwsh -c gh.ps1` with arguments.
 
-- `-name <PACKAGE>`: The name of the package.
-- `-dest <PACKAGE_PATH>`: The path to the package.
-- `[-etag <ETAG>]`: If the script returns an etag in `stdout`, it will be saved and passed to the script on the next run.
-- `[ARGS]...`: Additional arguments passed when adding the package
 
 ## Writing a script for a package type
 
 As mentioned above, a package type is a script file that is executed by `gpm`. Hence, it is important to follow the following rules:
 
-- The script must able to receive arguments described above.
-- The script must return an etag in `stdout` if it is available, or an empty string if it is not.
+- The script must able to receive arguments described below:
+  - `-name <PACKAGE>`: The name of the package.
+  - `-dest <PACKAGE_PATH>`: The path to the package.
+  - `[-etag <ETAG>]`: If the script returns an etag in `stdout`, it will be saved and passed to the script on the next run.
+  - `[ARGS]...`: Additional arguments passed when adding the package
+- The script must return an etag or an empty string in `stdout`.
 - The resulted file/folder must be the same name as the package name. For example, if the package name is `test`, the resulted file/folder must be `test` at repository root.
 
 ### Example
