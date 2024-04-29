@@ -49,7 +49,7 @@ gpm repo <NAME> add <NAME> <TYPE> [ARGS]...
 ```
 
 > [!IMPORTANT]
-> Package name must be the same as file/folder name to work properly.
+> Package name must be the same as file/folder name in order to work properly.
 
 ### Make an alias for the repo
 
