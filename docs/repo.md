@@ -39,7 +39,7 @@ Options:
 ```
 
 > [!IMPORTANT]
-> Package name must be the same as file/folder name to work properly.
+> Package name must be the same as file/folder name in order to work properly.
 
 ### `remove`
 
