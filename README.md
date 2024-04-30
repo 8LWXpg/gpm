@@ -2,6 +2,8 @@
 
 So you want to make your own package manager?
 
+For somthing that feels like a overkill to create standalone package manager, but feels too lazy to manually check for update and download.
+
 ## Installation
 
 ```
