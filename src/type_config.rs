@@ -1,5 +1,6 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
+#[cfg(target_os = "windows")]
 use crate::escape_win::EscapePwsh;
 use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
 

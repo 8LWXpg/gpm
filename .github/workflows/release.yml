@@ -51,14 +51,14 @@ jobs:
     - name: create artifact directory
       shell: bash
       run: |
-        directory=${{ github.repository }}-${{ matrix.target }}
+        directory=gpm-${{ matrix.target }}
         mkdir $directory
         cp README.md LICENSE $directory
         if [ -f target/${{ matrix.target }}/release/${{ github.repository }}.exe ]; then
-          cp target/${{ matrix.target }}/release/${{ github.repository }}.exe $directory
+          cp target/${{ matrix.target }}/release/gpm.exe $directory
           7z a -r $directory.zip $directory
         else
-          cp target/${{ matrix.target }}/release/${{ github.repository }} $directory
+          cp target/${{ matrix.target }}/release/gpm $directory
           tar cJf $directory.tar.xz $directory
         fi
 
