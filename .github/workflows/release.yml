@@ -54,7 +54,7 @@ jobs:
         directory=gpm-${{ matrix.target }}
         mkdir $directory
         cp README.md LICENSE $directory
-        if [ -f target/${{ matrix.target }}/release/${{ github.repository }}.exe ]; then
+        if [ -f target/${{ matrix.target }}/release/gpm.exe ]; then
           cp target/${{ matrix.target }}/release/gpm.exe $directory
           7z a -r $directory.zip $directory
         else
@@ -64,7 +64,7 @@ jobs:
 
     - uses: ncipollo/release-action@v1.14.0
       with:
-        artifacts: "${{ github.repository }}-${{ matrix.target }}.*"
+        artifacts: "gpm-${{ matrix.target }}.*"
         allowUpdates: true
         omitNameDuringUpdate: true
         omitBodyDuringUpdate: true
