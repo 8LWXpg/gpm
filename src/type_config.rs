@@ -63,6 +63,14 @@ impl TypeConfig {
                 args: Box::new(["-c".into()]),
             }
         }
+        #[cfg(not(target_os = "windows"))]
+        {
+            Self {
+                types: HashMap::new(),
+                shell: "bash".into(),
+                args: Box::new(["-c".into()]),
+            }
+        }
     }
 
     /// Load the configuration, or calls `new()` if it doesn't exist.

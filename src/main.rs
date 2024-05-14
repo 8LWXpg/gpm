@@ -1,3 +1,4 @@
+#[cfg(target_os = "windows")]
 mod escape_win;
 mod main_config;
 mod repository_config;

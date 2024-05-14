@@ -1,10 +1,10 @@
 {
-    "rust-analyzer.linkedProjects": [
-        ".\\Cargo.toml"
-    ],
     "cSpell.words": [
         "etag",
         "Pwsh",
         "tabwriter"
+    ],
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml"
     ]
 }
