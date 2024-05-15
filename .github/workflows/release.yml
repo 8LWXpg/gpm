@@ -71,6 +71,7 @@ jobs:
     needs: build
     if: success()
     steps:
+    - uses: actions/checkout@v4
     - name: create release
       uses: taiki-e/create-gh-release-action@v1
       with:
