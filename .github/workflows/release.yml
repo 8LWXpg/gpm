@@ -62,9 +62,13 @@ jobs:
           tar cJf $directory.tar.xz $directory
         fi
 
-    - uses: ncipollo/release-action@v1.14.0
+    - name: create release
+      uses: taiki-e/create-gh-release-action@v1
       with:
-        artifacts: "gpm-${{ matrix.target }}.*"
-        allowUpdates: true
-        omitNameDuringUpdate: true
-        omitBodyDuringUpdate: true
+        changelog: CHANGELOG.md
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        path: "gpm-${{ matrix.target }}.*"
