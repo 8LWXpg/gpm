@@ -173,13 +173,14 @@ impl Repo {
 impl fmt::Display for Repo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut tw = tabwriter::TabWriter::new(vec![]);
+        writeln!(&mut tw, "{}", "Packages:".bright_green()).unwrap();
         for (name, package) in &self.packages {
             writeln!(
                 &mut tw,
                 "  {}\t{}\t{}",
                 name.bright_cyan(),
                 package.r#type.bright_purple(),
-                package.args.join(" ")
+                package.args.join(", ")
             )
             .unwrap();
         }
