@@ -20,20 +20,18 @@ use tabwriter::TabWriter;
 struct TomlTypeConfig {
     /// Key: type name, Value: type properties
     types: HashMap<String, TomlTypeProp>,
-    shell: String,
-    args: Box<[String]>,
+    shell: HashMap<String, Box<[String]>>,
 }
 
-impl TomlTypeConfig {
-    fn into_config(self) -> TypeConfig {
-        TypeConfig {
-            types: self
+impl From<TypeConfig> for TomlTypeConfig {
+    fn from(t: TypeConfig) -> Self {
+        Self {
+            types: t
                 .types
                 .into_iter()
-                .map(|(name, type_prop)| (name, TypeProp::new(type_prop.ext)))
+                .map(|(name, type_prop)| (name, type_prop.into()))
                 .collect(),
-            shell: self.shell,
-            args: self.args,
+            shell: t.shell,
         }
     }
 }
@@ -41,6 +39,16 @@ impl TomlTypeConfig {
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlTypeProp {
     ext: String,
+    shell: String,
+}
+
+impl From<TypeProp> for TomlTypeProp {
+    fn from(prop: TypeProp) -> Self {
+        Self {
+            ext: prop.ext,
+            shell: prop.shell,
+        }
+    }
 }
 
 /// Configuration for package types.
@@ -48,8 +56,7 @@ struct TomlTypeProp {
 pub struct TypeConfig {
     /// Key: type name, Value: type properties
     pub types: HashMap<String, TypeProp>,
-    shell: String,
-    args: Box<[String]>,
+    shell: HashMap<String, Box<[String]>>,
 }
 
 impl TypeConfig {
@@ -58,16 +65,14 @@ impl TypeConfig {
         {
             Self {
                 types: HashMap::new(),
-                shell: "powershell".into(),
-                args: Box::new(["-c".into()]),
+                shell: HashMap::from([("powershell".into(), Box::from(["-c".into()]))]),
             }
         }
         #[cfg(not(target_os = "windows"))]
         {
             Self {
                 types: HashMap::new(),
-                shell: "bash".into(),
-                args: Box::new(["-c".into()]),
+                shell: HashMap::from([("powershell".into(), Box::from(["-c".into()]))]),
             }
         }
     }
@@ -78,36 +83,28 @@ impl TypeConfig {
             Ok(Self::new())
         } else {
             toml::from_str::<TomlTypeConfig>(&fs::read_to_string(&*TYPES_CONFIG)?)
-                .map(|c| c.into_config())
+                .map(|c| c.into())
                 .map_err(Into::into)
         }
     }
 
     /// Save the configuration.
     pub fn save(self) -> Result<()> {
-        fs::write(&*TYPES_CONFIG, toml::to_string(&self.into_toml_config())?).map_err(Into::into)
-    }
-
-    fn into_toml_config(self) -> TomlTypeConfig {
-        TomlTypeConfig {
-            types: self
-                .types
-                .into_iter()
-                .map(|(name, type_prop)| (name, TomlTypeProp { ext: type_prop.ext }))
-                .collect(),
-            shell: self.shell,
-            args: self.args,
-        }
+        fs::write(
+            &*TYPES_CONFIG,
+            toml::to_string(&TomlTypeConfig::from(self))?,
+        )
+        .map_err(Into::into)
     }
 
     /// Add a new type.
-    pub fn add(&mut self, name: String, ext: String) -> Result<()> {
+    pub fn add(&mut self, name: String, ext: String, shell: String) -> Result<()> {
         if let Entry::Vacant(e) = self.types.entry(name.clone()) {
             let path = SCRIPT_ROOT.join(format!("{}.{}", name, ext));
             if !path.exists() {
                 File::create(path)?;
             }
-            e.insert(TypeProp::new(ext));
+            e.insert(TypeProp::new(ext, shell));
             Ok(())
         } else {
             Err(anyhow!("type '{}' already exists", name.bright_yellow()))
@@ -133,8 +130,8 @@ impl TypeConfig {
         etag: Option<&str>,
         args: &[String],
     ) -> Result<String> {
-        let ext = match self.types.get(type_name) {
-            Some(prop) => &prop.ext,
+        let prop = match self.types.get(type_name) {
+            Some(prop) => prop,
             None => {
                 return Err(anyhow!(
                     "type '{}' does not exist",
@@ -143,14 +140,23 @@ impl TypeConfig {
             }
         };
 
-        let mut cmd = std::process::Command::new(&self.shell);
-        cmd.current_dir(repo_path).args(self.args.iter());
+        let (shell, shell_args) = match self.shell.get_key_value(&prop.shell) {
+            Some((shell, args)) => (shell, args),
+            None => {
+                return Err(anyhow!(
+                    "shell '{}' does not exist",
+                    prop.shell.bright_yellow()
+                ))
+            }
+        };
+        let mut cmd = std::process::Command::new(shell);
+        cmd.current_dir(repo_path).args(shell_args.iter());
         #[cfg(target_os = "windows")]
         {
-            match self.shell.as_str() {
+            match shell.as_str() {
                 "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe" => {
                     cmd.arg("&")
-                        .arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(ext))
+                        .arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
                         .arg("-name")
                         .arg_pwsh(name);
                     if let Some(etag) = etag {
@@ -159,7 +165,7 @@ impl TypeConfig {
                     cmd.args_pwsh(args);
                 }
                 _ => {
-                    cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
+                    cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
                         .arg("-name")
                         .arg(name);
                     if let Some(etag) = etag {
@@ -171,9 +177,7 @@ impl TypeConfig {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            cmd.current_dir(repo_path)
-                .args(self.args.iter())
-                .arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
+            cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
                 .arg("-name")
                 .arg(name);
             if let Some(etag) = etag {
@@ -195,6 +199,19 @@ impl TypeConfig {
     }
 }
 
+impl From<TomlTypeConfig> for TypeConfig {
+    fn from(t: TomlTypeConfig) -> Self {
+        Self {
+            types: t
+                .types
+                .into_iter()
+                .map(|(name, type_prop)| (name, type_prop.into()))
+                .collect(),
+            shell: t.shell,
+        }
+    }
+}
+
 impl Default for TypeConfig {
     fn default() -> Self {
         Self::new()
@@ -204,13 +221,25 @@ impl Default for TypeConfig {
 impl fmt::Display for TypeConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut tw = TabWriter::new(vec![]);
-        writeln!(&mut tw, "{}", "Types:".bright_green()).unwrap();
-        for (name, prop) in &self.types {
+        writeln!(&mut tw, "{}", "Shell:".bright_green()).unwrap();
+        for (name, args) in &self.shell {
             writeln!(
                 &mut tw,
                 "  {}\t{}",
                 name.bright_cyan(),
-                prop.ext.bright_purple()
+                args.join(" ").bright_purple()
+            )
+            .unwrap();
+        }
+
+        writeln!(&mut tw, "{}", "Types:".bright_green()).unwrap();
+        for (name, prop) in &self.types {
+            writeln!(
+                &mut tw,
+                "  {}\t{}\t{}",
+                name.bright_cyan(),
+                prop.ext.bright_purple(),
+                prop.shell,
             )
             .unwrap();
         }
@@ -226,10 +255,20 @@ impl fmt::Display for TypeConfig {
 #[derive(Debug)]
 pub struct TypeProp {
     pub ext: String,
+    pub shell: String,
 }
 
 impl TypeProp {
-    pub fn new(ext: String) -> Self {
-        Self { ext }
+    pub fn new(ext: String, shell: String) -> Self {
+        Self { ext, shell }
+    }
+}
+
+impl From<TomlTypeProp> for TypeProp {
+    fn from(prop: TomlTypeProp) -> Self {
+        Self {
+            ext: prop.ext,
+            shell: prop.shell,
+        }
     }
 }

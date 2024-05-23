@@ -156,6 +156,9 @@ enum TypeCommand {
 
         /// Script file extension
         ext: String,
+
+        /// Shell to use
+        shell: String,
     },
 
     /// Remove package types
@@ -268,9 +271,9 @@ fn main() {
             }
         }
         TopCommand::Type(t) => match t {
-            TypeCommand::Add { name, ext } => match TypeConfig::load() {
+            TypeCommand::Add { name, ext, shell } => match TypeConfig::load() {
                 Ok(mut type_cfg) => {
-                    type_cfg.add(name, ext).unwrap_or_else(error_exit0);
+                    type_cfg.add(name, ext, shell).unwrap_or_else(error_exit0);
                     type_cfg.save().unwrap_or_else(error_exit0);
                 }
                 Err(e) => error_exit0(e),
