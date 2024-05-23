@@ -21,7 +21,7 @@ gpm init
 ### Add a new package type
 
 ```bash
-gpm type add <NAME> <EXT>
+gpm type add <NAME> <EXT> <SHELL>
 ```
 
 Change your shell config at `~/.gpm/types.toml`.
