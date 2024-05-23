@@ -7,8 +7,7 @@ use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -153,9 +152,7 @@ impl TypeConfig {
                     cmd.arg("&")
                         .arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(ext))
                         .arg("-name")
-                        .arg_pwsh(name)
-                        .arg("-dest")
-                        .arg_pwsh(repo_path);
+                        .arg_pwsh(name);
                     if let Some(etag) = etag {
                         cmd.arg("-etag").arg_pwsh(etag);
                     }
@@ -164,9 +161,7 @@ impl TypeConfig {
                 _ => {
                     cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
                         .arg("-name")
-                        .arg(name)
-                        .arg("-dest")
-                        .arg(repo_path);
+                        .arg(name);
                     if let Some(etag) = etag {
                         cmd.arg("-etag").arg(etag);
                     }
@@ -180,9 +175,7 @@ impl TypeConfig {
                 .args(self.args.iter())
                 .arg(SCRIPT_ROOT.join(type_name).with_extension(ext))
                 .arg("-name")
-                .arg(name)
-                .arg("-dest")
-                .arg(repo_path);
+                .arg(name);
             if let Some(etag) = etag {
                 cmd.arg("-etag").arg(etag);
             }
