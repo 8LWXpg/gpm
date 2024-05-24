@@ -20,20 +20,13 @@ struct TomlConfig {
     repositories: HashMap<String, TomlRepositoryProp>,
 }
 
-impl TomlConfig {
-    fn into_config(self) -> Config {
-        Config {
-            repositories: self
+impl From<Config> for TomlConfig {
+    fn from(main_config: Config) -> Self {
+        Self {
+            repositories: main_config
                 .repositories
                 .into_iter()
-                .map(|(name, repo)| {
-                    (
-                        name,
-                        RepositoryProp {
-                            path: Path::new(&*repo.path).into(),
-                        },
-                    )
-                })
+                .map(|(name, repo_prop)| (name, repo_prop.into()))
                 .collect(),
         }
     }
@@ -43,6 +36,14 @@ impl TomlConfig {
 struct TomlRepositoryProp {
     /// Key: repository name, Value: repository properties
     path: Box<str>,
+}
+
+impl From<RepositoryProp> for TomlRepositoryProp {
+    fn from(repo: RepositoryProp) -> Self {
+        Self {
+            path: repo.path.to_string_lossy().into(),
+        }
+    }
 }
 
 /// GPM configuration.
@@ -63,31 +64,14 @@ impl Config {
             Ok(Self::new())
         } else {
             toml::from_str::<TomlConfig>(&fs::read_to_string(&*GPM_CONFIG)?)
-                .map(|c| c.into_config())
+                .map(Into::into)
                 .map_err(Into::into)
         }
     }
 
     /// Save the configuration.
     pub fn save(self) -> Result<()> {
-        fs::write(&*GPM_CONFIG, toml::to_string(&self.into_toml_config())?).map_err(Into::into)
-    }
-
-    fn into_toml_config(self) -> TomlConfig {
-        TomlConfig {
-            repositories: self
-                .repositories
-                .into_iter()
-                .map(|(name, ns)| {
-                    (
-                        name,
-                        TomlRepositoryProp {
-                            path: ns.path.to_string_lossy().into(),
-                        },
-                    )
-                })
-                .collect(),
-        }
+        fs::write(&*GPM_CONFIG, toml::to_string(&TomlConfig::from(self))?).map_err(Into::into)
     }
 
     /// Add a repository to the configuration.
@@ -113,6 +97,18 @@ impl Config {
                 },
                 None => error!("repository '{}' does not exist", name.bright_yellow()),
             }
+        }
+    }
+}
+
+impl From<TomlConfig> for Config {
+    fn from(main_config: TomlConfig) -> Self {
+        Self {
+            repositories: main_config
+                .repositories
+                .into_iter()
+                .map(|(name, repo)| (name, repo.into()))
+                .collect(),
         }
     }
 }
@@ -162,6 +158,14 @@ impl RepositoryProp {
     fn remove(&self) -> Result<()> {
         fs::remove_dir_all(&self.path)?;
         Ok(())
+    }
+}
+
+impl From<TomlRepositoryProp> for RepositoryProp {
+    fn from(repo: TomlRepositoryProp) -> Self {
+        Self {
+            path: Path::new(&*repo.path).into(),
+        }
     }
 }
 

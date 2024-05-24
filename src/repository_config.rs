@@ -21,25 +21,14 @@ struct TomlRepo {
     packages: HashMap<String, TomlPackage>,
 }
 
-impl TomlRepo {
-    pub fn into_config(self, path: &Path) -> Repo {
-        Repo {
-            packages: self
+impl From<Repo> for TomlRepo {
+    fn from(repo: Repo) -> Self {
+        Self {
+            packages: repo
                 .packages
                 .into_iter()
-                .map(|(name, package)| {
-                    (
-                        name,
-                        Package {
-                            r#type: package.r#type,
-                            args: package.args,
-                            etag: package.etag,
-                        },
-                    )
-                })
+                .map(|(name, package)| (name, package.into()))
                 .collect(),
-            type_config: TypeConfig::load().expect("failed to load type config"),
-            path: path.into(),
         }
     }
 }
@@ -50,6 +39,16 @@ struct TomlPackage {
     args: Box<[String]>,
     /// ETag for the package
     etag: Option<String>,
+}
+
+impl From<Package> for TomlPackage {
+    fn from(package: Package) -> Self {
+        Self {
+            r#type: package.r#type,
+            args: package.args,
+            etag: package.etag,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -73,38 +72,20 @@ impl Repo {
 
     /// Load from a TOML file at path.
     pub fn load(path: &Path) -> Result<Self> {
-        toml::from_str::<TomlRepo>(&fs::read_to_string(path).map_err(|_| {
+        toml::from_str::<TomlRepo>(&fs::read_to_string(path).map_err(|e| {
             anyhow!(
-                "failed to load config at '{}'",
+                "failed to load config at '{}' {}",
                 path.display().to_string().bright_yellow(),
+                e
             )
         })?)
-        .map(|c| c.into_config(path.parent().unwrap()))
+        .map(|repo| (repo, path.parent().unwrap()).into())
         .map_err(Into::into)
     }
 
     /// Save to a TOML file at path.
     pub fn save(self, path: &Path) -> Result<()> {
-        fs::write(path, toml::to_string(&self.into_toml_config())?).map_err(Into::into)
-    }
-
-    fn into_toml_config(self) -> TomlRepo {
-        TomlRepo {
-            packages: self
-                .packages
-                .into_iter()
-                .map(|(name, package)| {
-                    (
-                        name,
-                        TomlPackage {
-                            r#type: package.r#type,
-                            args: package.args,
-                            etag: package.etag,
-                        },
-                    )
-                })
-                .collect(),
-        }
+        fs::write(path, toml::to_string(&TomlRepo::from(self))?).map_err(Into::into)
     }
 
     /// Add a package and execute the script.
@@ -170,6 +151,20 @@ impl Repo {
     }
 }
 
+impl From<(TomlRepo, &Path)> for Repo {
+    fn from((config, path): (TomlRepo, &Path)) -> Self {
+        Self {
+            packages: config
+                .packages
+                .into_iter()
+                .map(|(name, package)| (name, package.into()))
+                .collect(),
+            type_config: TypeConfig::load().expect("failed to load type config"),
+            path: path.into(),
+        }
+    }
+}
+
 impl fmt::Display for Repo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut tw = tabwriter::TabWriter::new(vec![]);
@@ -202,7 +197,7 @@ pub struct Package {
 }
 
 impl Package {
-    pub fn new(r#type: String, args: Box<[String]>) -> Self {
+    fn new(r#type: String, args: Box<[String]>) -> Self {
         Self {
             r#type,
             args,
@@ -250,6 +245,16 @@ impl Package {
             fs::copy(from, to)?;
         }
         Ok(())
+    }
+}
+
+impl From<TomlPackage> for Package {
+    fn from(package: TomlPackage) -> Self {
+        Self {
+            r#type: package.r#type,
+            args: package.args,
+            etag: package.etag,
+        }
     }
 }
 

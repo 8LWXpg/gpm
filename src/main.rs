@@ -285,7 +285,10 @@ fn main() {
                 }
                 Err(e) => error_exit0(e),
             },
-            TypeCommand::List => print!("{}", TypeConfig::load().unwrap_or_default()),
+            TypeCommand::List => match TypeConfig::load() {
+                Ok(type_cfg) => print!("{}", type_cfg),
+                Err(e) => error_exit0(e),
+            },
         },
         TopCommand::Generate { shell } => {
             clap_complete::generate(shell, &mut App::command(), "gpm", &mut io::stdout())
