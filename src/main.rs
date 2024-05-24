@@ -236,7 +236,10 @@ fn main() {
             }
             Err(e) => error_exit0(e),
         },
-        TopCommand::List => print!("{}", Config::load().unwrap_or_default()),
+        TopCommand::List => match Config::load() {
+            Ok(gpm_cfg) => print!("{}", gpm_cfg),
+            Err(e) => error_exit0(e),
+        },
         TopCommand::Repo(repo) => {
             let repo_cfg_path = &main_config::get_repo_path(&repo.name).join(REPO_CONFIG);
             match repository_config::Repo::load(repo_cfg_path) {
