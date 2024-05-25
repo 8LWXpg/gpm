@@ -155,8 +155,7 @@ impl TypeConfig {
         {
             match shell.as_str() {
                 "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe" => {
-                    cmd.arg("&")
-                        .arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
+                    cmd.arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
                         .arg("-name")
                         .arg_pwsh(name);
                     if let Some(etag) = etag {
