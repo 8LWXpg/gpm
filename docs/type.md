@@ -9,8 +9,8 @@ A package type is a script file that is executed by `gpm` to install, update.
 For example, a configuration file for a package type could look like this:
 
 ```toml
-shell = "pwsh"
-args = ["-c"]
+[shell]
+pwsh = ["-c", "&"]
 
 [types.gh]
 ext = "ps1"
