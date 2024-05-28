@@ -8,7 +8,7 @@
 
 ### Changed
 
-- Sort the toml file before writing it to disk.
+- Sort the toml file before writing.
 
 ## [0.1.0]
 
