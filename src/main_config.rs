@@ -1,5 +1,6 @@
 //! Handling main configuration file at GPM_CONFIG.
 
+use crate::config::sort_keys;
 use crate::repository_config;
 use crate::{error, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 
@@ -17,6 +18,7 @@ use tabwriter::TabWriter;
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlConfig {
     /// Key: repository name, Value: repository properties
+    #[serde(serialize_with = "sort_keys")]
     repositories: HashMap<String, TomlRepositoryProp>,
 }
 

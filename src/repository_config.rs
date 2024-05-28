@@ -1,5 +1,6 @@
 //! Handling packages under repositories.
 
+use crate::config::sort_keys;
 use crate::type_config::TypeConfig;
 use crate::{error, REPO_PATH};
 
@@ -18,6 +19,7 @@ use std::{fmt, fs};
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlRepo {
     /// Key: package name, Value: package details
+    #[serde(serialize_with = "sort_keys")]
     packages: HashMap<String, TomlPackage>,
 }
 

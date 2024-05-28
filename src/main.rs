@@ -1,3 +1,4 @@
+mod config;
 #[cfg(target_os = "windows")]
 mod escape_win;
 mod main_config;
@@ -68,7 +69,6 @@ enum TopCommand {
     List,
 
     /// Manage packages in a repository
-    // #[clap(visible_alias = "r")]
     #[command(arg_required_else_help = true)]
     Repo(Repository),
 

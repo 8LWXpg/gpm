@@ -1,5 +1,6 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
+use crate::config::sort_keys;
 #[cfg(target_os = "windows")]
 use crate::escape_win::EscapePwsh;
 use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
@@ -19,8 +20,10 @@ use tabwriter::TabWriter;
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlTypeConfig {
     /// Key: type name, Value: type properties
-    types: HashMap<String, TomlTypeProp>,
+    #[serde(serialize_with = "sort_keys")]
     shell: HashMap<String, Box<[String]>>,
+    #[serde(serialize_with = "sort_keys")]
+    types: HashMap<String, TomlTypeProp>,
 }
 
 impl From<TypeConfig> for TomlTypeConfig {
