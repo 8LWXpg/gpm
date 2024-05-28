@@ -118,6 +118,9 @@ enum RepositoryCommand {
         name: Vec<String>,
     },
 
+    /// Remove etag field for all packages in the repository
+    RemoveEtag,
+
     /// Update packages in the repository
     #[clap(visible_alias = "u")]
     #[command(arg_required_else_help = true)]
@@ -252,6 +255,9 @@ fn main() {
                         }
                         RepositoryCommand::Remove { name } => {
                             repo_cfg.remove(name);
+                        }
+                        RepositoryCommand::RemoveEtag => {
+                            repo_cfg.remove_etag();
                         }
                         RepositoryCommand::Update { name, all } => {
                             if all {

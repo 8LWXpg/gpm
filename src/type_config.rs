@@ -58,8 +58,8 @@ impl From<TypeProp> for TomlTypeProp {
 #[derive(Debug)]
 pub struct TypeConfig {
     /// Key: type name, Value: type properties
-    pub types: HashMap<String, TypeProp>,
     shell: HashMap<String, Box<[String]>>,
+    types: HashMap<String, TypeProp>,
 }
 
 impl TypeConfig {
@@ -67,8 +67,8 @@ impl TypeConfig {
         #[cfg(target_os = "windows")]
         {
             Self {
-                types: HashMap::new(),
                 shell: HashMap::from([("powershell".into(), Box::from(["-c".into()]))]),
+                types: HashMap::new(),
             }
         }
         #[cfg(not(target_os = "windows"))]
@@ -256,8 +256,8 @@ impl fmt::Display for TypeConfig {
 
 #[derive(Debug)]
 pub struct TypeProp {
-    pub ext: String,
-    pub shell: String,
+    ext: String,
+    shell: String,
 }
 
 impl TypeProp {

@@ -55,6 +55,17 @@ Options:
   -h, --help  Print help
 ```
 
+### `remove-etag`
+
+Remove etag field for all packages in the repository
+
+```
+Usage: gpm repo <NAME> remove-etag
+
+Options:
+  -h, --help  Print help
+```
+
 ### `update`
 
 Update packages in the repository, space separated.

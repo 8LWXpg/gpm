@@ -56,7 +56,7 @@ impl From<Package> for TomlPackage {
 #[derive(Debug)]
 pub struct Repo {
     /// Key: package name, Value: package details
-    pub packages: HashMap<String, Package>,
+    packages: HashMap<String, Package>,
     type_config: TypeConfig,
     /// Path to the repository
     path: Box<Path>,
@@ -112,6 +112,13 @@ impl Repo {
                 },
                 None => error!("package '{}' does not exist", name.bright_yellow()),
             }
+        }
+    }
+
+    /// Remove ETag for packages.
+    pub fn remove_etag(&mut self) {
+        for package in self.packages.values_mut() {
+            package.etag = None;
         }
     }
 
@@ -191,7 +198,7 @@ impl fmt::Display for Repo {
 }
 
 #[derive(Debug)]
-pub struct Package {
+struct Package {
     r#type: String,
     args: Box<[String]>,
     /// ETag for the package

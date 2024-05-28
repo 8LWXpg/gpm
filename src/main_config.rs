@@ -50,7 +50,7 @@ impl From<RepositoryProp> for TomlRepositoryProp {
 
 /// GPM configuration.
 pub struct Config {
-    pub repositories: HashMap<String, RepositoryProp>,
+    repositories: HashMap<String, RepositoryProp>,
 }
 
 impl Config {
@@ -141,7 +141,7 @@ impl Default for Config {
 }
 
 /// Property of a repository in the GPM configuration.
-pub struct RepositoryProp {
+struct RepositoryProp {
     /// Full path to the repository directory
     path: Box<Path>,
 }

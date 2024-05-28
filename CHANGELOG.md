@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- Added remove-etag command under repo
+
 ### Changed
 
-- Now sort the toml file before writing it to disk.
+- Sort the toml file before writing it to disk.
 
 ## [0.1.0]
 
