@@ -80,7 +80,7 @@ impl Config {
     pub fn add(&mut self, name: String, path: &Path) -> Result<()> {
         if let Entry::Vacant(e) = self.repositories.entry(name.clone()) {
             e.insert(RepositoryProp::new(path)?);
-            add!("{}\t{}", name.bright_yellow(), path.to_str().unwrap());
+            add!("{}\t{}", name.bright_cyan(), path.to_str().unwrap());
             Ok(())
         } else {
             Err(anyhow!(
@@ -97,7 +97,7 @@ impl Config {
                 Some(repo) => match repo.remove() {
                     Ok(()) => remove!(
                         "{}\t{}",
-                        name.bright_yellow(),
+                        name.bright_cyan(),
                         self.repositories
                             .remove(&name)
                             .unwrap()

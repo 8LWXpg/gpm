@@ -107,12 +107,7 @@ impl TypeConfig {
             if !path.exists() {
                 File::create(path)?;
             }
-            add!(
-                "{}\t{}\t{}",
-                name.bright_yellow(),
-                ext.bright_purple(),
-                shell
-            );
+            add!("{}\t{}\t{}", name.bright_cyan(), ext.bright_purple(), shell);
             e.insert(TypeProp::new(ext, shell));
             Ok(())
         } else {
@@ -124,7 +119,7 @@ impl TypeConfig {
     pub fn remove(&mut self, names: Vec<String>) {
         for name in names {
             match self.types.remove(&name) {
-                Some(_) => remove!("{}", name.bright_yellow()),
+                Some(_) => remove!("{}", name.bright_cyan()),
                 None => error!("type '{}' does not exist", name.bright_yellow()),
             }
         }

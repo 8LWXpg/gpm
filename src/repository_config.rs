@@ -115,7 +115,7 @@ impl Repo {
                 Some(package) => match package.remove(&name, &self.path) {
                     std::result::Result::Ok(()) => {
                         self.packages.remove(&name);
-                        remove!("{}", name.bright_yellow());
+                        remove!("{}", name.bright_cyan());
                     }
                     Err(e) => error!("failed to remove package '{}' {}", name.bright_yellow(), e),
                 },
