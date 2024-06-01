@@ -1,8 +1,8 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
-use crate::config::sort_keys;
 #[cfg(target_os = "windows")]
-use crate::escape_win::EscapePwsh;
+use super::escape_win::EscapePwsh;
+use super::util::sort_keys;
 use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
 
 use anyhow::{anyhow, Result};

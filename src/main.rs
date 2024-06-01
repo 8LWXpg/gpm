@@ -1,20 +1,16 @@
 mod config;
-#[cfg(target_os = "windows")]
-mod escape_win;
-mod main_config;
-mod repository_config;
-mod type_config;
+
+use crate::config::main::Config;
+use crate::config::r#type::TypeConfig;
+use crate::config::repository::RepoConfig;
 
 use clap::CommandFactory;
-use main_config::Config;
-
 use clap::{builder::styling, Args, Parser, Subcommand};
 use clap_complete::Shell;
 use colored::Colorize;
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
 use std::{fs, io, process};
-use type_config::TypeConfig;
 
 static GPM_HOME: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap().join(".gpm"));
 static GPM_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("config.toml"));
@@ -246,8 +242,8 @@ fn main() {
             Err(e) => error_exit0(e),
         },
         TopCommand::Repo(repo) => {
-            let repo_cfg_path = &main_config::get_repo_path(&repo.name).join(REPO_CONFIG);
-            match repository_config::Repo::load(repo_cfg_path) {
+            let repo_cfg_path = &config::main::get_repo_path(&repo.name).join(REPO_CONFIG);
+            match RepoConfig::load(repo_cfg_path) {
                 Ok(mut repo_cfg) => {
                     match repo.command {
                         RepositoryCommand::Add { name, r#type, args } => {

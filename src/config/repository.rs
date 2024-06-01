@@ -1,7 +1,7 @@
 //! Handling packages under repositories.
 
-use crate::config::sort_keys;
-use crate::type_config::TypeConfig;
+use super::r#type::TypeConfig;
+use super::util::sort_keys;
 use crate::{add, clone, error, remove, REPO_PATH};
 
 use anyhow::{anyhow, Result};
@@ -17,14 +17,14 @@ use std::{fmt, fs};
 
 // Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
-struct TomlRepo {
+struct TomlRepoConfig {
     /// Key: package name, Value: package details
     #[serde(serialize_with = "sort_keys")]
     packages: HashMap<String, TomlPackage>,
 }
 
-impl From<Repo> for TomlRepo {
-    fn from(repo: Repo) -> Self {
+impl From<RepoConfig> for TomlRepoConfig {
+    fn from(repo: RepoConfig) -> Self {
         Self {
             packages: repo
                 .packages
@@ -54,7 +54,7 @@ impl From<Package> for TomlPackage {
 }
 
 #[derive(Debug)]
-pub struct Repo {
+pub struct RepoConfig {
     /// Key: package name, Value: package details
     packages: HashMap<String, Package>,
     type_config: TypeConfig,
@@ -62,7 +62,7 @@ pub struct Repo {
     path: Box<Path>,
 }
 
-impl Repo {
+impl RepoConfig {
     /// Create a empty config, panic if failed to load TypeConfig.
     pub fn new(path: &Path) -> Self {
         Self {
@@ -74,7 +74,7 @@ impl Repo {
 
     /// Load from a TOML file at path.
     pub fn load(path: &Path) -> Result<Self> {
-        toml::from_str::<TomlRepo>(&fs::read_to_string(path).map_err(|e| {
+        toml::from_str::<TomlRepoConfig>(&fs::read_to_string(path).map_err(|e| {
             anyhow!(
                 "failed to load config at '{}' {}",
                 path.display().to_string().bright_yellow(),
@@ -87,7 +87,7 @@ impl Repo {
 
     /// Save to a TOML file at path.
     pub fn save(self, path: &Path) -> Result<()> {
-        fs::write(path, toml::to_string(&TomlRepo::from(self))?).map_err(Into::into)
+        fs::write(path, toml::to_string(&TomlRepoConfig::from(self))?).map_err(Into::into)
     }
 
     /// Add a package and execute the script.
@@ -170,8 +170,8 @@ impl Repo {
     }
 }
 
-impl From<(TomlRepo, &Path)> for Repo {
-    fn from((config, path): (TomlRepo, &Path)) -> Self {
+impl From<(TomlRepoConfig, &Path)> for RepoConfig {
+    fn from((config, path): (TomlRepoConfig, &Path)) -> Self {
         Self {
             packages: config
                 .packages
@@ -184,7 +184,7 @@ impl From<(TomlRepo, &Path)> for Repo {
     }
 }
 
-impl fmt::Display for Repo {
+impl fmt::Display for RepoConfig {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut tw = tabwriter::TabWriter::new(vec![]);
         writeln!(&mut tw, "{}", "Packages:".bright_green()).unwrap();

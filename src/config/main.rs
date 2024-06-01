@@ -1,7 +1,8 @@
 //! Handling main configuration file at GPM_CONFIG.
 
-use crate::config::sort_keys;
-use crate::{add, remove, repository_config};
+use super::repository;
+use super::util::sort_keys;
+use crate::{add, remove};
 use crate::{error, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 
 use anyhow::{anyhow, Result};
@@ -161,7 +162,7 @@ impl RepositoryProp {
     fn new(path: &Path) -> Result<Self> {
         fs::create_dir_all(path)?;
         let cfg_path = path.join(REPO_CONFIG);
-        repository_config::Repo::new(path).save(&cfg_path)?;
+        repository::RepoConfig::new(path).save(&cfg_path)?;
         Ok(Self {
             path: REPO_PATH.join(path).into_boxed_path(),
         })
