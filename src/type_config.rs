@@ -3,7 +3,7 @@
 use crate::config::sort_keys;
 #[cfg(target_os = "windows")]
 use crate::escape_win::EscapePwsh;
-use crate::{error, SCRIPT_ROOT, TYPES_CONFIG};
+use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
 
 use anyhow::{anyhow, Result};
 use colored::Colorize;
@@ -19,9 +19,9 @@ use tabwriter::TabWriter;
 // Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
 struct TomlTypeConfig {
-    /// Key: type name, Value: type properties
     #[serde(serialize_with = "sort_keys")]
     shell: HashMap<String, Box<[String]>>,
+    /// Key: type name, Value: type properties
     #[serde(serialize_with = "sort_keys")]
     types: HashMap<String, TomlTypeProp>,
 }
@@ -74,8 +74,8 @@ impl TypeConfig {
         #[cfg(not(target_os = "windows"))]
         {
             Self {
+                shell: HashMap::from([("bash".into(), Box::from(["-c".into()]))]),
                 types: HashMap::new(),
-                shell: HashMap::from([("powershell".into(), Box::from(["-c".into()]))]),
             }
         }
     }
@@ -107,6 +107,12 @@ impl TypeConfig {
             if !path.exists() {
                 File::create(path)?;
             }
+            add!(
+                "{}\t{}\t{}",
+                name.bright_yellow(),
+                ext.bright_purple(),
+                shell
+            );
             e.insert(TypeProp::new(ext, shell));
             Ok(())
         } else {
@@ -118,7 +124,7 @@ impl TypeConfig {
     pub fn remove(&mut self, names: Vec<String>) {
         for name in names {
             match self.types.remove(&name) {
-                Some(_) => (),
+                Some(_) => remove!("{}", name.bright_yellow()),
                 None => error!("type '{}' does not exist", name.bright_yellow()),
             }
         }
@@ -211,12 +217,6 @@ impl From<TomlTypeConfig> for TypeConfig {
                 .collect(),
             shell: t.shell,
         }
-    }
-}
-
-impl Default for TypeConfig {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

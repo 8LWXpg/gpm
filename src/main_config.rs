@@ -1,7 +1,7 @@
 //! Handling main configuration file at GPM_CONFIG.
 
 use crate::config::sort_keys;
-use crate::repository_config;
+use crate::{add, remove, repository_config};
 use crate::{error, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 
 use anyhow::{anyhow, Result};
@@ -80,6 +80,7 @@ impl Config {
     pub fn add(&mut self, name: String, path: &Path) -> Result<()> {
         if let Entry::Vacant(e) = self.repositories.entry(name.clone()) {
             e.insert(RepositoryProp::new(path)?);
+            add!("{}\t{}", name.bright_yellow(), path.to_str().unwrap());
             Ok(())
         } else {
             Err(anyhow!(
@@ -94,7 +95,16 @@ impl Config {
         for name in names {
             match self.repositories.get(&name) {
                 Some(repo) => match repo.remove() {
-                    Ok(()) => _ = self.repositories.remove(&name),
+                    Ok(()) => remove!(
+                        "{}\t{}",
+                        name.bright_yellow(),
+                        self.repositories
+                            .remove(&name)
+                            .unwrap()
+                            .path
+                            .to_str()
+                            .unwrap()
+                    ),
                     Err(e) => error!("failed to remove package '{}' {}", name.bright_yellow(), e),
                 },
                 None => error!("repository '{}' does not exist", name.bright_yellow()),

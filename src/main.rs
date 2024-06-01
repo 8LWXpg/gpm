@@ -24,6 +24,7 @@ static REPO_PATH: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("repositories"));
 static SCRIPT_ROOT: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("scripts"));
 static TYPES_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("types.toml"));
 
+// region: clap macros
 #[derive(Debug, Parser)]
 #[command(
     version,
@@ -177,6 +178,7 @@ enum TypeCommand {
     #[clap(visible_alias = "l")]
     List,
 }
+// endregion
 
 fn get_styles() -> clap::builder::Styles {
     clap::builder::Styles::default()
@@ -189,6 +191,7 @@ fn get_styles() -> clap::builder::Styles {
         .placeholder(styling::AnsiColor::Cyan.on_default())
 }
 
+// region: print macros
 /// Print an error message to stderr.
 #[macro_export]
 macro_rules! error {
@@ -199,6 +202,40 @@ macro_rules! error {
         eprintln!("{} {}", "error:".bright_red().bold(), format!($fmt, $($arg)*))
     };
 }
+
+/// Message for adding an item.
+#[macro_export]
+macro_rules! add {
+    ($msg:expr) => {
+        println!("{} {}", "+".bright_green().bold(), $msg)
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        println!("{} {}", "+".bright_green().bold(), format!($fmt, $($arg)*))
+    };
+}
+
+/// Message for cloning an item.
+#[macro_export]
+macro_rules! clone {
+    ($msg:expr) => {
+        println!("{} {}", "=".bright_blue().bold(), $msg)
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        println!("{} {}", "=".bright_blue().bold(), format!($fmt, $($arg)*))
+    };
+}
+
+/// Message for removing an item.
+#[macro_export]
+macro_rules! remove {
+    ($msg:expr) => {
+        println!("{} {}", "-".bright_red().bold(), $msg)
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        println!("{} {}", "-".bright_red().bold(), format!($fmt, $($arg)*))
+    };
+}
+// endregion
 
 fn error_exit0<T>(msg: T)
 where

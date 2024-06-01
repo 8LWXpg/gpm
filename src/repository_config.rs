@@ -2,9 +2,9 @@
 
 use crate::config::sort_keys;
 use crate::type_config::TypeConfig;
-use crate::{error, REPO_PATH};
+use crate::{add, clone, error, remove, REPO_PATH};
 
-use anyhow::{anyhow, Ok, Result};
+use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
@@ -93,8 +93,14 @@ impl Repo {
     /// Add a package and execute the script.
     pub fn add(&mut self, name: String, r#type: String, args: Box<[String]>) -> Result<()> {
         if let Entry::Vacant(e) = self.packages.entry(name.clone()) {
-            let mut package = Package::new(r#type, args);
+            let mut package = Package::new(r#type.clone(), args.clone());
             package.add(&name, &self.path, &self.type_config)?;
+            add!(
+                "{}\t{}\t{}",
+                name.bright_cyan(),
+                r#type.bright_purple(),
+                args.join(", ")
+            );
             e.insert(package);
             Ok(())
         } else {
@@ -107,7 +113,10 @@ impl Repo {
         for name in names {
             match self.packages.get(&name) {
                 Some(package) => match package.remove(&name, &self.path) {
-                    std::result::Result::Ok(()) => _ = self.packages.remove(&name),
+                    std::result::Result::Ok(()) => {
+                        self.packages.remove(&name);
+                        remove!("{}", name.bright_yellow());
+                    }
                     Err(e) => error!("failed to remove package '{}' {}", name.bright_yellow(), e),
                 },
                 None => error!("package '{}' does not exist", name.bright_yellow()),
@@ -151,9 +160,10 @@ impl Repo {
     pub fn copy(&self, names: Vec<String>) {
         for name in names {
             match self.packages.get(&name) {
-                Some(package) => package.copy(&self.path, &name).unwrap_or_else(|e| {
-                    error!("failed to copy package '{}' {}", name.bright_yellow(), e)
-                }),
+                Some(package) => match package.copy(&self.path, &name) {
+                    Ok(_) => clone!("{}", name.bright_yellow()),
+                    Err(e) => error!("failed to copy package '{}' {}", name.bright_yellow(), e),
+                },
                 None => error!("package '{}' does not exist", name.bright_yellow()),
             }
         }
