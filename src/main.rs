@@ -10,7 +10,7 @@ use clap_complete::Shell;
 use colored::Colorize;
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
-use std::{fs, io, process};
+use std::{env, fs, io, process};
 
 static GPM_HOME: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap().join(".gpm"));
 static GPM_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("config.toml"));
@@ -224,7 +224,13 @@ fn main() {
         TopCommand::Add { name, path } => match Config::load() {
             Ok(mut gpm_cfg) => {
                 gpm_cfg
-                    .add(name.clone(), &path.unwrap_or(REPO_PATH.join(&name)))
+                    .add(
+                        name.clone(),
+                        &match path {
+                            Some(p) => env::current_dir().unwrap().join(p),
+                            None => REPO_PATH.join(&name),
+                        },
+                    )
                     .unwrap_or_else(error_exit0);
                 gpm_cfg.save().unwrap_or_else(error_exit0);
             }

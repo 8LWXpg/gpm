@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Fixed relative path in `--path` option.
+
 ## [0.2.0]
 
 ### Added
