@@ -57,11 +57,12 @@ Options:
 Add a new package type.
 
 ```
-Usage: gpm type add <NAME> <EXT>
+Usage: gpm type add <NAME> <EXT> <SHELL>
 
 Arguments:
   <NAME>  Package type
   <EXT>   Script file extension
+  <SHELL>  Shell to use
 
 Options:
   -h, --help  Print help

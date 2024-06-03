@@ -2,6 +2,7 @@
 
 use super::repository;
 use super::util::sort_keys;
+use crate::config::util::prompt;
 use crate::{add, remove};
 use crate::{error, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 
@@ -78,6 +79,8 @@ impl Config {
     }
 
     /// Add a repository to the configuration.
+    ///
+    /// `path` is the absolute path.
     pub fn add(&mut self, name: String, path: &Path) -> Result<()> {
         if let Entry::Vacant(e) = self.repositories.entry(name.clone()) {
             e.insert(RepositoryProp::new(path)?);
@@ -106,8 +109,34 @@ impl Config {
                             .to_str()
                             .unwrap()
                     ),
-                    Err(e) => error!("failed to remove package '{}' {}", name.bright_yellow(), e),
+                    Err(e) => {
+                        error!("failed to remove package '{}' {}", name.bright_yellow(), e);
+                        match prompt("Remove from registry?") {
+                            Ok(true) => remove!(
+                                "{}\t{}",
+                                name.bright_cyan(),
+                                self.repositories
+                                    .remove(&name)
+                                    .unwrap()
+                                    .path
+                                    .to_str()
+                                    .unwrap()
+                            ),
+                            Ok(false) => {}
+                            Err(e) => error!("{}", e),
+                        }
+                    }
                 },
+                None => error!("repository '{}' does not exist", name.bright_yellow()),
+            }
+        }
+    }
+
+    /// Remove registry entries.
+    pub fn remove_registry(&mut self, names: Vec<String>) {
+        for name in names {
+            match self.repositories.remove(&name) {
+                Some(_) => remove!("{}", name.bright_cyan()),
                 None => error!("repository '{}' does not exist", name.bright_yellow()),
             }
         }

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- Added `--registry` option to `remove` command.
+- Added a prompt to remove the registry when the removal target fails.
+
 ### Fixed
 
 - Fixed relative path in `--path` option.

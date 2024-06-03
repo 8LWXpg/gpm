@@ -4,13 +4,15 @@ use crate::config::main::Config;
 use crate::config::r#type::TypeConfig;
 use crate::config::repository::RepoConfig;
 
+use std::path::PathBuf;
+use std::{env, fs, io, process};
+
 use clap::CommandFactory;
 use clap::{builder::styling, Args, Parser, Subcommand};
 use clap_complete::Shell;
 use colored::Colorize;
 use once_cell::sync::Lazy;
-use std::path::PathBuf;
-use std::{env, fs, io, process};
+use path_clean::PathClean;
 
 static GPM_HOME: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap().join(".gpm"));
 static GPM_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("config.toml"));
@@ -59,6 +61,10 @@ enum TopCommand {
         /// Repository name
         #[clap(num_args = 1..)]
         name: Vec<String>,
+
+        /// Remove registry only
+        #[clap(short, long)]
+        registry: bool,
     },
 
     /// List all repositories
@@ -227,7 +233,7 @@ fn main() {
                     .add(
                         name.clone(),
                         &match path {
-                            Some(p) => env::current_dir().unwrap().join(p),
+                            Some(p) => env::current_dir().unwrap().join(p).clean(),
                             None => REPO_PATH.join(&name),
                         },
                     )
@@ -236,9 +242,13 @@ fn main() {
             }
             Err(e) => error_exit0(e),
         },
-        TopCommand::Remove { name } => match Config::load() {
+        TopCommand::Remove { name, registry } => match Config::load() {
             Ok(mut gpm_cfg) => {
-                gpm_cfg.remove(name);
+                if registry {
+                    gpm_cfg.remove_registry(name);
+                } else {
+                    gpm_cfg.remove(name);
+                }
                 gpm_cfg.save().unwrap_or_else(error_exit0);
             }
             Err(e) => error_exit0(e),

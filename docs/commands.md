@@ -55,6 +55,7 @@ Arguments:
   [NAME]...  Repository name
 
 Options:
+  -r, --registry  Remove registry only
   -h, --help  Print help
 ```
 

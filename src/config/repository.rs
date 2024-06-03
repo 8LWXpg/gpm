@@ -2,6 +2,7 @@
 
 use super::r#type::TypeConfig;
 use super::util::sort_keys;
+use crate::config::util::prompt;
 use crate::{add, clone, error, remove, REPO_PATH};
 
 use anyhow::{anyhow, Result};
@@ -117,7 +118,17 @@ impl RepoConfig {
                         self.packages.remove(&name);
                         remove!("{}", name.bright_cyan());
                     }
-                    Err(e) => error!("failed to remove package '{}' {}", name.bright_yellow(), e),
+                    Err(e) => {
+                        error!("failed to remove package '{}' {}", name.bright_yellow(), e);
+                        match prompt("Remove from registry?") {
+                            Ok(true) => {
+                                self.packages.remove(&name);
+                                remove!("{}", name.bright_cyan());
+                            }
+                            Ok(false) => {}
+                            Err(e) => error!(e),
+                        }
+                    }
                 },
                 None => error!("package '{}' does not exist", name.bright_yellow()),
             }
