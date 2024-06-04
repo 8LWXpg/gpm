@@ -5,23 +5,6 @@ use serde::{Serialize, Serializer};
 use std::collections::{BTreeMap, HashMap};
 use std::io::{self, Write};
 
-/// prompt the user for a yes/no response.
-///
-/// # Arguments
-/// message - The prompt to display, appended with " [y/N]: "
-pub fn prompt(message: &str) -> Result<bool> {
-    let mut input = String::new();
-    print!("{} [y/N]: ", message);
-    io::stdout().flush()?; // Make sure the prompt is immediately displayed
-    io::stdin().read_line(&mut input)?;
-    match input.trim().to_lowercase().as_str() {
-        "y" => Ok(true),
-        "n" => Ok(false),
-        _ => Ok(false),
-    }
-}
-
-/// Message for adding an item.
 #[macro_export]
 macro_rules! tabwriter {
     ($fmt:expr, $($arg:tt)*) => {
@@ -44,6 +27,7 @@ macro_rules! print_message {
     };
 }
 
+/// Message for adding an item.
 #[macro_export]
 macro_rules! add {
     ($($arg:tt)*) => {
@@ -51,6 +35,7 @@ macro_rules! add {
     };
 }
 
+/// Message for cloning an item.
 #[macro_export]
 macro_rules! clone {
     ($($arg:tt)*) => {
@@ -58,6 +43,7 @@ macro_rules! clone {
     };
 }
 
+/// Message for removing an item.
 #[macro_export]
 macro_rules! remove {
     ($($arg:tt)*) => {
@@ -74,4 +60,20 @@ where
         .iter()
         .collect::<BTreeMap<_, _>>()
         .serialize(serializer)
+}
+
+/// prompt the user for a yes/no response.
+///
+/// # Arguments
+/// `message` - The prompt to display, appended with " [y/N]: "
+pub fn prompt(message: &str) -> Result<bool> {
+    let mut input = String::new();
+    print!("{} [y/N]: ", message);
+    io::stdout().flush()?; // Make sure the prompt is immediately displayed
+    io::stdin().read_line(&mut input)?;
+    match input.trim().to_lowercase().as_str() {
+        "y" => Ok(true),
+        "n" => Ok(false),
+        _ => Ok(false),
+    }
 }
