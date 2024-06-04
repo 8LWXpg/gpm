@@ -5,7 +5,7 @@
 ### Added
 
 - Added `--registry` option to `remove` command.
-- Added a prompt to remove the registry when the removal target fails.
+- Added a prompt to remove the registry when the target removal fails.
 
 ### Fixed
 

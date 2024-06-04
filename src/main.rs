@@ -262,17 +262,11 @@ fn main() {
             match RepoConfig::load(repo_cfg_path) {
                 Ok(mut repo_cfg) => {
                     match repo.command {
-                        RepositoryCommand::Add { name, r#type, args } => {
-                            repo_cfg
-                                .add(name, r#type, args.into_boxed_slice())
-                                .unwrap_or_else(error_exit0);
-                        }
-                        RepositoryCommand::Remove { name } => {
-                            repo_cfg.remove(name);
-                        }
-                        RepositoryCommand::RemoveEtag => {
-                            repo_cfg.remove_etag();
-                        }
+                        RepositoryCommand::Add { name, r#type, args } => repo_cfg
+                            .add(name, r#type, args.into_boxed_slice())
+                            .unwrap_or_else(error_exit0),
+                        RepositoryCommand::Remove { name } => repo_cfg.remove(name),
+                        RepositoryCommand::RemoveEtag => repo_cfg.remove_etag(),
                         RepositoryCommand::Update { name, all } => {
                             if all {
                                 repo_cfg.update_all();
@@ -280,9 +274,7 @@ fn main() {
                                 repo_cfg.update(name);
                             }
                         }
-                        RepositoryCommand::Clone { name } => {
-                            repo_cfg.copy(name);
-                        }
+                        RepositoryCommand::Clone { name } => repo_cfg.copy(name),
                         RepositoryCommand::List => {
                             print!("{}", repo_cfg);
                             return;
