@@ -41,9 +41,6 @@ gpm add <NAME>
 
 For more information see [here](./docs/repo.md).
 
-> [!IMPORTANT]
-> Package name must be the same as resulted file/folder name to work properly.
-
 ### Add a package to the repository
 
 ```bash
