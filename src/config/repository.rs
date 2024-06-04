@@ -131,6 +131,16 @@ impl RepoConfig {
         }
     }
 
+    /// Remove packages from the registry.
+    pub fn remove_registry(&mut self, names: Vec<String>) {
+        for name in names {
+            match self.packages.remove(&name) {
+                Some(_) => remove!("{}", name.bright_cyan()),
+                None => error!("package '{}' does not exist", name.bright_yellow()),
+            }
+        }
+    }
+
     /// Remove ETag for packages.
     pub fn remove_etag(&mut self) {
         for package in self.packages.values_mut() {

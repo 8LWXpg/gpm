@@ -2,7 +2,7 @@
 
 #[cfg(target_os = "windows")]
 use super::escape_win::EscapePwsh;
-use super::util::sort_keys;
+use super::util::{prompt, sort_keys};
 use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
 
 use anyhow::{anyhow, Result};
@@ -115,8 +115,30 @@ impl TypeConfig {
         }
     }
 
-    /// Remove types.
+    /// Remove types and delete the script files.
     pub fn remove(&mut self, names: Vec<String>) {
+        for name in names {
+            match self.types.remove(&name) {
+                Some(r#type) => {
+                    match fs::remove_file(SCRIPT_ROOT.join(&name).with_extension(&r#type.ext)) {
+                        Ok(_) => remove!("{}", name.bright_cyan()),
+                        Err(e) => {
+                            error!(e);
+                            match prompt("Remove from registry?") {
+                                Ok(true) => remove!("{}", name.bright_cyan()),
+                                Ok(false) => {}
+                                Err(e) => error!(e),
+                            }
+                        }
+                    }
+                }
+                None => error!("type '{}' does not exist", name.bright_yellow()),
+            }
+        }
+    }
+
+    /// Remove types without deleting the script files.
+    pub fn remove_registry(&mut self, names: Vec<String>) {
         for name in names {
             match self.types.remove(&name) {
                 Some(_) => remove!("{}", name.bright_cyan()),

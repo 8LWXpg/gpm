@@ -18,7 +18,6 @@ ext = "ps1"
 
 If you execute `gpm repo <NAME> add <PACKAGE> gh [ARGS]...`, `gpm` will execute `pwsh -c gh.ps1` with arguments.
 
-
 ## Writing a script for a package type
 
 As mentioned above, a package type is a script file that is executed by `gpm`. Hence, it is important to follow the following rules:

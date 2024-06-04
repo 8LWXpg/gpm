@@ -52,6 +52,7 @@ Arguments:
   [NAME]...  The name of the package
 
 Options:
+  -r, --registry  Remove registry only
   -h, --help  Print help
 ```
 

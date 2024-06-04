@@ -118,6 +118,10 @@ enum RepositoryCommand {
         /// The name of the package
         #[clap(num_args = 1..)]
         name: Vec<String>,
+
+        /// Remove registry only
+        #[clap(short, long)]
+        registry: bool,
     },
 
     /// Remove etag field for all packages in the repository
@@ -173,6 +177,10 @@ enum TypeCommand {
         /// Type name
         #[clap(num_args = 1..)]
         name: Vec<String>,
+
+        /// Remove registry only
+        #[clap(short, long)]
+        registry: bool,
     },
 
     /// List all package types
@@ -264,7 +272,13 @@ fn main() {
                         RepositoryCommand::Add { name, r#type, args } => repo_cfg
                             .add(name, r#type, args.into_boxed_slice())
                             .unwrap_or_else(error_exit0),
-                        RepositoryCommand::Remove { name } => repo_cfg.remove(name),
+                        RepositoryCommand::Remove { name, registry } => {
+                            if registry {
+                                repo_cfg.remove_registry(name);
+                            } else {
+                                repo_cfg.remove(name)
+                            }
+                        }
                         RepositoryCommand::RemoveEtag => repo_cfg.remove_etag(),
                         RepositoryCommand::Update { name, all } => {
                             if all {
@@ -292,9 +306,13 @@ fn main() {
                 }
                 Err(e) => error_exit0(e),
             },
-            TypeCommand::Remove { name } => match TypeConfig::load() {
+            TypeCommand::Remove { name, registry } => match TypeConfig::load() {
                 Ok(mut type_cfg) => {
-                    type_cfg.remove(name);
+                    if registry {
+                        type_cfg.remove_registry(name);
+                    } else {
+                        type_cfg.remove(name);
+                    }
                     type_cfg.save().unwrap_or_else(error_exit0);
                 }
                 Err(e) => error_exit0(e),

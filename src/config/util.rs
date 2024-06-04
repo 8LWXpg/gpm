@@ -27,7 +27,7 @@ macro_rules! print_message {
     };
 }
 
-/// Message for adding an item.
+/// print message for adding an item.
 #[macro_export]
 macro_rules! add {
     ($($arg:tt)*) => {
@@ -35,7 +35,7 @@ macro_rules! add {
     };
 }
 
-/// Message for cloning an item.
+/// print message for cloning an item.
 #[macro_export]
 macro_rules! clone {
     ($($arg:tt)*) => {
@@ -43,7 +43,7 @@ macro_rules! clone {
     };
 }
 
-/// Message for removing an item.
+/// print message for removing an item.
 #[macro_export]
 macro_rules! remove {
     ($($arg:tt)*) => {
