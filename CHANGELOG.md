@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## [0.3.0]
 
 ### Added
 
-- Added `--registry` option to `remove` command.
+- Added `--registry` option to `remove` command to remove the registry only.
 - Added a prompt to remove the registry when the target removal fails.
 
 ### Fixed

@@ -61,6 +61,11 @@ alias <NAME>='gpm repo <NAME>'
 
 ## Features
 
+### Download third party cargo subcommand instead of compile locally
+
+1. Add a new repository `gpm add cargo --path ~/.cargo/bin`
+2. Download the subcommand `gpm repo cargo add <NAME> <TYPE> [ARGS]...`
+
 ### Port packages
 
 1. Remove ETag field under `<repo>/version.toml` with `gpm repo <repo> remove-etag`
