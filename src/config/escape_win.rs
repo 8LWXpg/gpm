@@ -1,6 +1,8 @@
 //! Custom escape rules for Windows...
 
-use std::{ffi::OsStr, os::windows::process::CommandExt, process::Command};
+use std::ffi::OsStr;
+use std::os::windows::process::CommandExt;
+use std::process::Command;
 
 /// What this does is basically wrap the string in single quotes and escape any double quote with a backslash.
 ///

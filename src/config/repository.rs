@@ -1,20 +1,16 @@
 //! Handling packages under repositories.
 
 use super::r#type::TypeConfig;
-use super::util::sort_keys;
-use crate::config::util::prompt;
+use super::util::{prompt, sort_keys};
 use crate::{add, clone, error, remove, REPO_PATH};
 
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
-use std::env::current_dir;
-use std::io;
+use std::collections::{hash_map::Entry, HashMap};
 use std::io::Write;
 use std::path::Path;
-use std::{fmt, fs};
+use std::{env, fmt, fs, io};
 
 // Separate from the Config struct to allow more flexibility in the future.
 #[derive(Debug, Deserialize, Serialize)]
@@ -268,7 +264,7 @@ impl Package {
 
     fn copy(&self, repo_path: &Path, name: &str) -> Result<()> {
         let from = repo_path.join(name);
-        let to = current_dir()?.join(name);
+        let to = env::current_dir()?.join(name);
         if fs::metadata(&from)?.is_dir() {
             copy_dir_all(from, to)?;
         } else {

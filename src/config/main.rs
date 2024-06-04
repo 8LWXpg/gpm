@@ -1,16 +1,13 @@
 //! Handling main configuration file at GPM_CONFIG.
 
 use super::repository;
-use super::util::sort_keys;
-use crate::config::util::prompt;
-use crate::{add, remove};
-use crate::{error, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
+use super::util::{prompt, sort_keys};
+use crate::{add, error, remove, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap};
 use std::io::Write;
 use std::path::Path;
 use std::{fmt, fs};
