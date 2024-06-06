@@ -17,7 +17,7 @@ ext = "ps1"
 shell = "pwsh"
 ```
 
-If you execute `gpm repo <NAME> add <PACKAGE> gh [ARGS]...`, `gpm` will execute `pwsh -c gh.ps1` with arguments.
+If you execute `gpm repo <NAME> add <PACKAGE> gh [ARGS]...`, `gpm` will execute `pwsh -c & gh.ps1` with arguments.
 
 ## Writing a script for a package type
 
