@@ -167,7 +167,7 @@ impl TypeConfig {
         };
 
         let (shell, shell_args) = match self.shell.get_key_value(&prop.shell) {
-            Some((shell, args)) => (shell, args),
+            Some(s) => s,
             None => {
                 return Err(anyhow!(
                     "shell '{}' does not exist",
