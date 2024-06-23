@@ -1,7 +1,5 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
-#[cfg(target_os = "windows")]
-use super::escape_win::EscapePwsh;
 use super::util::{prompt, sort_keys};
 use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
 
@@ -177,39 +175,13 @@ impl TypeConfig {
         };
         let mut cmd = std::process::Command::new(shell);
         cmd.current_dir(repo_path).args(shell_args.iter());
-        #[cfg(target_os = "windows")]
-        {
-            match shell.as_str() {
-                "powershell" | "powershell.exe" | "pwsh" | "pwsh.exe" => {
-                    cmd.arg_pwsh(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
-                        .arg("-name")
-                        .arg_pwsh(name);
-                    if let Some(etag) = etag {
-                        cmd.arg("-etag").arg_pwsh(etag);
-                    }
-                    cmd.args_pwsh(args);
-                }
-                _ => {
-                    cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
-                        .arg("-name")
-                        .arg(name);
-                    if let Some(etag) = etag {
-                        cmd.arg("-etag").arg(etag);
-                    }
-                    cmd.args(args);
-                }
-            }
+        cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
+            .arg("-name")
+            .arg(name);
+        if let Some(etag) = etag {
+            cmd.arg("-etag").arg(etag);
         }
-        #[cfg(not(target_os = "windows"))]
-        {
-            cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
-                .arg("-name")
-                .arg(name);
-            if let Some(etag) = etag {
-                cmd.arg("-etag").arg(etag);
-            }
-            cmd.args(args);
-        }
+        cmd.args(args);
         println!("{} {:?}", "executing:".bright_blue(), cmd);
         let output = cmd
             .stdin(Stdio::inherit())
