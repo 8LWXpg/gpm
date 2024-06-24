@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.0]
+
+- Removed custom shell escape on windows, original code moved to `win_shell_escape` branch.
+
 ## [0.3.0]
 
 ### Added

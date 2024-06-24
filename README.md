@@ -79,4 +79,4 @@ alias <NAME>='gpm repo <NAME>'
 
 ## Windows
 
-There's no standard way to pass arguments to executables in Windows, each executable has its own parsing logic. So, if you have issues with passing arguments to certain executables, please add a fix to the [escape_win.rs](./src/escape_win.rs) file.
+There's no standard way to pass arguments to executables in Windows, each executable has its own parsing logic. So, if you have issues with passing arguments to certain executables, please open an issue.
