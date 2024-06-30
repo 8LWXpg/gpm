@@ -1,6 +1,18 @@
 # Changelog
 
+## [0.5.0]
+
+### Added
+
+- Added `--cwd` option to `add` command to pass and store working directory.
+
+### Changed
+
+- Bumped dependencies.
+
 ## [0.4.0]
+
+### Removed
 
 - Removed custom shell escape on windows, original code moved to `win_shell_escape` branch.
 

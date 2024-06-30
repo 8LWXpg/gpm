@@ -35,6 +35,7 @@ Arguments:
   [ARGS]...  Args get passed to the script
 
 Options:
+  -c, --cwd   If we passing cwd to the script
   -h, --help  Print help
 ```
 

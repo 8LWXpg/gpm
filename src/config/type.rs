@@ -152,6 +152,7 @@ impl TypeConfig {
         name: &str,
         repo_path: &Path,
         etag: Option<&str>,
+        cwd: Option<&str>,
         args: &[String],
     ) -> Result<String> {
         let prop = match self.types.get(type_name) {
@@ -178,11 +179,15 @@ impl TypeConfig {
         cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
             .arg("-name")
             .arg(name);
+        if let Some(cwd) = cwd {
+            cmd.arg("-cwd").arg(cwd);
+        }
         if let Some(etag) = etag {
             cmd.arg("-etag").arg(etag);
         }
         cmd.args(args);
         println!("{} {:?}", "executing:".bright_blue(), cmd);
+
         let output = cmd
             .stdin(Stdio::inherit())
             .stdout(Stdio::piped())

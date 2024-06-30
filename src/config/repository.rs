@@ -38,6 +38,7 @@ struct TomlPackage {
     args: Box<[String]>,
     /// ETag for the package
     etag: Option<String>,
+    cwd: Option<String>,
 }
 
 impl From<Package> for TomlPackage {
@@ -46,6 +47,7 @@ impl From<Package> for TomlPackage {
             r#type: package.r#type,
             args: package.args,
             etag: package.etag,
+            cwd: package.cwd,
         }
     }
 }
@@ -88,15 +90,22 @@ impl RepoConfig {
     }
 
     /// Add a package and execute the script.
-    pub fn add(&mut self, name: String, r#type: String, args: Box<[String]>) -> Result<()> {
+    pub fn add(
+        &mut self,
+        name: String,
+        r#type: String,
+        args: Box<[String]>,
+        cwd: bool,
+    ) -> Result<()> {
         if let Entry::Vacant(e) = self.packages.entry(name.clone()) {
-            let mut package = Package::new(r#type.clone(), args.clone());
+            let mut package = Package::new(r#type.clone(), args.clone(), cwd);
             package.add(&name, &self.path, &self.type_config)?;
             add!(
-                "{}\t{}\t{}",
+                "{}\t{}\t{}{}",
                 name.bright_cyan(),
                 r#type.bright_purple(),
-                args.join(", ")
+                args.join(", "),
+                (if cwd { "\t(cwd)" } else { "" }).bright_white()
             );
             e.insert(package);
             Ok(())
@@ -208,10 +217,11 @@ impl fmt::Display for RepoConfig {
         for (name, package) in &self.packages {
             writeln!(
                 &mut tw,
-                "  {}\t{}\t{}",
+                "  {}\t{}\t{}\t{}",
                 name.bright_cyan(),
                 package.r#type.bright_purple(),
-                package.args.join(", ")
+                package.args.join(", "),
+                package.cwd.as_deref().unwrap_or_default().bright_white()
             )
             .unwrap();
         }
@@ -230,14 +240,20 @@ struct Package {
     args: Box<[String]>,
     /// ETag for the package
     etag: Option<String>,
+    cwd: Option<String>,
 }
 
 impl Package {
-    fn new(r#type: String, args: Box<[String]>) -> Self {
+    fn new(r#type: String, args: Box<[String]>, cwd: bool) -> Self {
         Self {
             r#type,
             args,
             etag: None,
+            cwd: if cwd {
+                Some(env::current_dir().unwrap().to_str().unwrap().into())
+            } else {
+                None
+            },
         }
     }
 
@@ -248,6 +264,7 @@ impl Package {
             name,
             repo_path,
             self.etag.as_deref(),
+            self.cwd.as_deref(),
             &self.args,
         )?;
         if !etag.is_empty() {
@@ -290,6 +307,7 @@ impl From<TomlPackage> for Package {
             r#type: package.r#type,
             args: package.args,
             etag: package.etag,
+            cwd: package.cwd,
         }
     }
 }

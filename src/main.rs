@@ -109,6 +109,10 @@ enum RepositoryCommand {
 
         /// Args get passed to the script
         args: Vec<String>,
+
+        /// If we passing cwd to the script
+        #[clap(short, long)]
+        cwd: bool,
     },
 
     /// Remove packages in the repository
@@ -269,8 +273,13 @@ fn main() {
             match RepoConfig::load(repo_cfg_path) {
                 Ok(mut repo_cfg) => {
                     match repo.command {
-                        RepositoryCommand::Add { name, r#type, args } => repo_cfg
-                            .add(name, r#type, args.into_boxed_slice())
+                        RepositoryCommand::Add {
+                            name,
+                            r#type,
+                            args,
+                            cwd,
+                        } => repo_cfg
+                            .add(name, r#type, args.into_boxed_slice(), cwd)
                             .unwrap_or_else(error_exit0),
                         RepositoryCommand::Remove { name, registry } => {
                             if registry {
