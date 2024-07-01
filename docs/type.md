@@ -21,22 +21,38 @@ If you execute `gpm repo <NAME> add <PACKAGE> gh [ARGS]...`, `gpm` will execute 
 
 ## Writing a script for a package type
 
-As mentioned above, a package type is a script file that is executed by `gpm`. Hence, it is important to follow the following rules:
+As mentioned above, a package type is a script file that is executed by `gpm`.
 
-- The script must able to receive arguments described below:
-  - `-name <PACKAGE>`: The name of the package.
-  - `-dest <PACKAGE_PATH>`: The path to the package.
-  - `[-etag <ETAG>]`: If the script returns an etag in `stdout`, it will be saved and passed to the script on the next run.
-  - `[-cwd <CWD>]`: If `--cwd` is passed, the current working directory will be passed to the script.
-  - `[ARGS]...`: Additional arguments passed when adding the package
-- The script must return an etag or an empty string in `stdout`.
-- The resulted file/folder must be the same name as the package name. For example, if the package name is `test`, the resulted file/folder must be `test` at repository root.
+Here is how a command executed by `gpm`:
 
-Here is an example of a command that executed by `gpm`:
+```shell
+<SHELL> [SHELL_ARGS]... <TYPE> "-name" <NAME> ["-cwd" <CWD>] ["-etag" <ETAG>] [ARGS]...
+```
+
+It should look like this in practice:
 
 ```shell
 cd "/home/user/.gpm/repositories/exe" && "pwsh" "-nop" "/home/user/.gpm/scripts/zip_exe.ps1" "-name" "fzf" "-etag" "\"0x8DC862A0850D3BA\"" "junegunn/fzf" "linux_amd64"
 ```
+
+Hence the script must be able to receive these arguments
+
+```shell
+-name <NAME>
+[-cwd <CWD>]
+[-etag <ETAG>]
+[ARGS]...
+```
+
+With the following rules:
+
+- The script must able to receive arguments described below:
+  - `-name <PACKAGE>`: The name of the package.
+  - `[-cwd <CWD>]`: If `--cwd` is passed, the current working directory will be passed to the script.
+  - `[-etag <ETAG>]`: If the script returns an etag in `stdout`, it will be saved and passed to the script on the next run.
+  - `[ARGS]...`: Additional arguments passed when adding the package
+- The script must return an etag or an empty string (nothing) in `stdout`.
+- The resulted file/folder must be the same name as the package name. For example, if the package name is `test`, the resulted file/folder must be `test` at repository root.
 
 ### Example
 
