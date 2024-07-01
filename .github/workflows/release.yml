@@ -46,13 +46,14 @@ jobs:
       with:
         target: ${{ matrix.target }}
 
-    - name: Run Cross
+    - name: Install Cross
       if: ${{ matrix.cross }}
       uses: taiki-e/install-action@v2
       with:
         tool: cross
 
-    - run: cross build --release --target ${{ matrix.target }}
+    - name: Run Cross
+      run: cross build --release --target ${{ matrix.target }}
       if: ${{ matrix.cross }}
 
     - name: Run Cargo
