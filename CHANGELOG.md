@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1]
+
+### Changed
+
+- Sort output of `list` command.
+- Bumped dependencies.
+
 ## [0.5.0]
 
 ### Added

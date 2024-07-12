@@ -7,7 +7,7 @@ use crate::{add, clone, error, remove, REPO_PATH};
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 use std::io::Write;
 use std::path::Path;
 use std::{env, fmt, fs, io};
@@ -214,7 +214,8 @@ impl fmt::Display for RepoConfig {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut tw = tabwriter::TabWriter::new(vec![]);
         writeln!(&mut tw, "{}", "Packages:".bright_green()).unwrap();
-        for (name, package) in &self.packages {
+        let btree_map: BTreeMap<_, _> = self.packages.iter().collect();
+        for (name, package) in &btree_map {
             writeln!(
                 &mut tw,
                 "  {}\t{}\t{}\t{}",

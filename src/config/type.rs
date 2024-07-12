@@ -6,7 +6,7 @@ use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -218,7 +218,8 @@ impl fmt::Display for TypeConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut tw = TabWriter::new(vec![]);
         writeln!(&mut tw, "{}", "Shell:".bright_green()).unwrap();
-        for (name, args) in &self.shell {
+        let btree_map: BTreeMap<_, _> = self.shell.iter().collect();
+        for (name, args) in &btree_map {
             writeln!(
                 &mut tw,
                 "  {}\t{}",

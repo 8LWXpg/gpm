@@ -7,7 +7,7 @@ use crate::{add, error, remove, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 use std::io::Write;
 use std::path::Path;
 use std::{fmt, fs};
@@ -156,7 +156,8 @@ impl fmt::Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut tw = TabWriter::new(vec![]);
         writeln!(&mut tw, "{}", "Repositories:".bright_green()).unwrap();
-        for (name, ns) in &self.repositories {
+        let btree_map: BTreeMap<_, _> = self.repositories.iter().collect();
+        for (name, ns) in &btree_map {
             writeln!(
                 &mut tw,
                 "  {}\t{}",
