@@ -31,177 +31,177 @@ static TYPES_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("types.toml"));
     arg_required_else_help = true,
 )]
 struct App {
-    #[clap(subcommand)]
-    command: TopCommand,
+	#[clap(subcommand)]
+	command: TopCommand,
 }
 
 #[derive(Debug, Subcommand)]
 enum TopCommand {
-    /// Initialize the package manager, creating the necessary directories
-    #[clap(visible_alias = "i")]
-    Init,
+	/// Initialize the package manager, creating the necessary directories
+	#[clap(visible_alias = "i")]
+	Init,
 
-    /// Add a new repository
-    #[clap(visible_alias = "a")]
-    #[command(arg_required_else_help = true)]
-    Add {
-        /// Repository name
-        name: String,
+	/// Add a new repository
+	#[clap(visible_alias = "a")]
+	#[command(arg_required_else_help = true)]
+	Add {
+		/// Repository name
+		name: String,
 
-        /// Repository path
-        #[clap(short, long)]
-        path: Option<PathBuf>,
-    },
+		/// Repository path
+		#[clap(short, long)]
+		path: Option<PathBuf>,
+	},
 
-    /// Remove repositories
-    #[clap(visible_alias = "r")]
-    #[command(arg_required_else_help = true)]
-    Remove {
-        /// Repository name
-        #[clap(num_args = 1..)]
-        name: Vec<String>,
+	/// Remove repositories
+	#[clap(visible_alias = "r")]
+	#[command(arg_required_else_help = true)]
+	Remove {
+		/// Repository name
+		#[clap(num_args = 1..)]
+		name: Vec<String>,
 
-        /// Remove registry only
-        #[clap(short, long)]
-        registry: bool,
-    },
+		/// Remove registry only
+		#[clap(short, long)]
+		registry: bool,
+	},
 
-    /// List all repositories
-    #[clap(visible_alias = "l")]
-    List,
+	/// List all repositories
+	#[clap(visible_alias = "l")]
+	List,
 
-    /// Manage packages in a repository
-    #[command(arg_required_else_help = true)]
-    Repo(Repository),
+	/// Manage packages in a repository
+	#[command(arg_required_else_help = true)]
+	Repo(Repository),
 
-    /// Manage package types
-    #[clap(subcommand, visible_alias = "t")]
-    #[command(arg_required_else_help = true)]
-    Type(TypeCommand),
+	/// Manage package types
+	#[clap(subcommand, visible_alias = "t")]
+	#[command(arg_required_else_help = true)]
+	Type(TypeCommand),
 
-    /// Generate shell completion scripts
-    Generate {
-        /// The shell to generate the completion script for
-        shell: Shell,
-    },
+	/// Generate shell completion scripts
+	Generate {
+		/// The shell to generate the completion script for
+		shell: Shell,
+	},
 }
 
 #[derive(Debug, Args)]
 struct Repository {
-    /// Repository name
-    name: String,
+	/// Repository name
+	name: String,
 
-    #[clap(subcommand)]
-    command: RepositoryCommand,
+	#[clap(subcommand)]
+	command: RepositoryCommand,
 }
 
 #[derive(Debug, Subcommand)]
 enum RepositoryCommand {
-    /// Add a package to the repository
-    #[clap(visible_alias = "a")]
-    #[command(arg_required_else_help = true)]
-    Add {
-        /// Package name
-        name: String,
+	/// Add a package to the repository
+	#[clap(visible_alias = "a")]
+	#[command(arg_required_else_help = true)]
+	Add {
+		/// Package name
+		name: String,
 
-        /// Package type
-        r#type: String,
+		/// Package type
+		r#type: String,
 
-        /// Args get passed to the script
-        args: Vec<String>,
+		/// Args get passed to the script
+		args: Vec<String>,
 
-        /// If we passing cwd to the script
-        #[clap(short, long)]
-        cwd: bool,
-    },
+		/// If we passing cwd to the script
+		#[clap(short, long)]
+		cwd: bool,
+	},
 
-    /// Remove packages in the repository
-    #[clap(visible_alias = "r")]
-    #[command(arg_required_else_help = true)]
-    Remove {
-        /// The name of the package
-        #[clap(num_args = 1..)]
-        name: Vec<String>,
+	/// Remove packages in the repository
+	#[clap(visible_alias = "r")]
+	#[command(arg_required_else_help = true)]
+	Remove {
+		/// The name of the package
+		#[clap(num_args = 1..)]
+		name: Vec<String>,
 
-        /// Remove registry only
-        #[clap(short, long)]
-        registry: bool,
-    },
+		/// Remove registry only
+		#[clap(short, long)]
+		registry: bool,
+	},
 
-    /// Remove etag field for all packages in the repository
-    RemoveEtag,
+	/// Remove etag field for all packages in the repository
+	RemoveEtag,
 
-    /// Update packages in the repository
-    #[clap(visible_alias = "u")]
-    #[command(arg_required_else_help = true)]
-    Update {
-        /// Package name
-        #[clap(num_args = 1..)]
-        name: Vec<String>,
+	/// Update packages in the repository
+	#[clap(visible_alias = "u")]
+	#[command(arg_required_else_help = true)]
+	Update {
+		/// Package name
+		#[clap(num_args = 1..)]
+		name: Vec<String>,
 
-        /// Update all
-        #[clap(short, long)]
-        all: bool,
-    },
+		/// Update all
+		#[clap(short, long)]
+		all: bool,
+	},
 
-    /// Clone packages in the repository to the current directory
-    #[clap(visible_alias = "c")]
-    #[command(arg_required_else_help = true)]
-    Clone {
-        /// Package name
-        #[clap(num_args = 1..)]
-        name: Vec<String>,
-    },
+	/// Clone packages in the repository to the current directory
+	#[clap(visible_alias = "c")]
+	#[command(arg_required_else_help = true)]
+	Clone {
+		/// Package name
+		#[clap(num_args = 1..)]
+		name: Vec<String>,
+	},
 
-    /// List all packages in the repository
-    #[clap(visible_alias = "l")]
-    List,
+	/// List all packages in the repository
+	#[clap(visible_alias = "l")]
+	List,
 }
 
 #[derive(Debug, Subcommand)]
 enum TypeCommand {
-    /// Add a new package type
-    #[clap(visible_alias = "a")]
-    #[command(arg_required_else_help = true)]
-    Add {
-        /// Package type
-        name: String,
+	/// Add a new package type
+	#[clap(visible_alias = "a")]
+	#[command(arg_required_else_help = true)]
+	Add {
+		/// Package type
+		name: String,
 
-        /// Script file extension
-        ext: String,
+		/// Script file extension
+		ext: String,
 
-        /// Shell to use
-        shell: String,
-    },
+		/// Shell to use
+		shell: String,
+	},
 
-    /// Remove package types
-    #[clap(visible_alias = "r")]
-    #[command(arg_required_else_help = true)]
-    Remove {
-        /// Type name
-        #[clap(num_args = 1..)]
-        name: Vec<String>,
+	/// Remove package types
+	#[clap(visible_alias = "r")]
+	#[command(arg_required_else_help = true)]
+	Remove {
+		/// Type name
+		#[clap(num_args = 1..)]
+		name: Vec<String>,
 
-        /// Remove registry only
-        #[clap(short, long)]
-        registry: bool,
-    },
+		/// Remove registry only
+		#[clap(short, long)]
+		registry: bool,
+	},
 
-    /// List all package types
-    #[clap(visible_alias = "l")]
-    List,
+	/// List all package types
+	#[clap(visible_alias = "l")]
+	List,
 }
 // endregion
 
 fn get_styles() -> clap::builder::Styles {
-    clap::builder::Styles::default()
-        .usage(styling::AnsiColor::BrightGreen.on_default())
-        .header(styling::AnsiColor::BrightGreen.on_default())
-        .literal(styling::AnsiColor::BrightCyan.on_default())
-        .invalid(styling::AnsiColor::BrightYellow.on_default())
-        .error(styling::AnsiColor::BrightRed.on_default().bold())
-        .valid(styling::AnsiColor::BrightGreen.on_default())
-        .placeholder(styling::AnsiColor::Cyan.on_default())
+	clap::builder::Styles::default()
+		.usage(styling::AnsiColor::BrightGreen.on_default())
+		.header(styling::AnsiColor::BrightGreen.on_default())
+		.literal(styling::AnsiColor::BrightCyan.on_default())
+		.invalid(styling::AnsiColor::BrightYellow.on_default())
+		.error(styling::AnsiColor::BrightRed.on_default().bold())
+		.valid(styling::AnsiColor::BrightGreen.on_default())
+		.placeholder(styling::AnsiColor::Cyan.on_default())
 }
 
 /// Print an error message to stderr.
@@ -217,122 +217,122 @@ macro_rules! error {
 
 fn error_exit0<T>(msg: T)
 where
-    T: std::fmt::Display,
+	T: std::fmt::Display,
 {
-    error!(msg);
-    process::exit(0);
+	error!(msg);
+	process::exit(0);
 }
 
 fn main() {
-    let args = App::parse();
+	let args = App::parse();
 
-    match args.command {
-        TopCommand::Init => {
-            if !GPM_HOME.exists() {
-                fs::create_dir(&*GPM_HOME).unwrap_or_else(error_exit0);
-            }
-            if !REPO_PATH.exists() {
-                fs::create_dir(&*REPO_PATH).unwrap_or_else(error_exit0);
-            }
-            if !SCRIPT_ROOT.exists() {
-                fs::create_dir(&*SCRIPT_ROOT).unwrap_or_else(error_exit0);
-            }
-        }
-        TopCommand::Add { name, path } => match Config::load() {
-            Ok(mut gpm_cfg) => {
-                gpm_cfg
-                    .add(
-                        name.clone(),
-                        &match path {
-                            Some(p) => env::current_dir().unwrap().join(p).clean(),
-                            None => REPO_PATH.join(&name),
-                        },
-                    )
-                    .unwrap_or_else(error_exit0);
-                gpm_cfg.save().unwrap_or_else(error_exit0);
-            }
-            Err(e) => error_exit0(e),
-        },
-        TopCommand::Remove { name, registry } => match Config::load() {
-            Ok(mut gpm_cfg) => {
-                if registry {
-                    gpm_cfg.remove_registry(name);
-                } else {
-                    gpm_cfg.remove(name);
-                }
-                gpm_cfg.save().unwrap_or_else(error_exit0);
-            }
-            Err(e) => error_exit0(e),
-        },
-        TopCommand::List => match Config::load() {
-            Ok(gpm_cfg) => print!("{}", gpm_cfg),
-            Err(e) => error_exit0(e),
-        },
-        TopCommand::Repo(repo) => {
-            let repo_cfg_path = &config::main::get_repo_path(&repo.name).join(REPO_CONFIG);
-            match RepoConfig::load(repo_cfg_path) {
-                Ok(mut repo_cfg) => {
-                    match repo.command {
-                        RepositoryCommand::Add {
-                            name,
-                            r#type,
-                            args,
-                            cwd,
-                        } => repo_cfg
-                            .add(name, r#type, args.into_boxed_slice(), cwd)
-                            .unwrap_or_else(error_exit0),
-                        RepositoryCommand::Remove { name, registry } => {
-                            if registry {
-                                repo_cfg.remove_registry(name);
-                            } else {
-                                repo_cfg.remove(name)
-                            }
-                        }
-                        RepositoryCommand::RemoveEtag => repo_cfg.remove_etag(),
-                        RepositoryCommand::Update { name, all } => {
-                            if all {
-                                repo_cfg.update_all();
-                            } else {
-                                repo_cfg.update(name);
-                            }
-                        }
-                        RepositoryCommand::Clone { name } => repo_cfg.copy(name),
-                        RepositoryCommand::List => {
-                            print!("{}", repo_cfg);
-                            return;
-                        }
-                    }
-                    repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
-                }
-                Err(e) => error_exit0(e),
-            }
-        }
-        TopCommand::Type(t) => match t {
-            TypeCommand::Add { name, ext, shell } => match TypeConfig::load() {
-                Ok(mut type_cfg) => {
-                    type_cfg.add(name, ext, shell).unwrap_or_else(error_exit0);
-                    type_cfg.save().unwrap_or_else(error_exit0);
-                }
-                Err(e) => error_exit0(e),
-            },
-            TypeCommand::Remove { name, registry } => match TypeConfig::load() {
-                Ok(mut type_cfg) => {
-                    if registry {
-                        type_cfg.remove_registry(name);
-                    } else {
-                        type_cfg.remove(name);
-                    }
-                    type_cfg.save().unwrap_or_else(error_exit0);
-                }
-                Err(e) => error_exit0(e),
-            },
-            TypeCommand::List => match TypeConfig::load() {
-                Ok(type_cfg) => print!("{}", type_cfg),
-                Err(e) => error_exit0(e),
-            },
-        },
-        TopCommand::Generate { shell } => {
-            clap_complete::generate(shell, &mut App::command(), "gpm", &mut io::stdout())
-        }
-    }
+	match args.command {
+		TopCommand::Init => {
+			if !GPM_HOME.exists() {
+				fs::create_dir(&*GPM_HOME).unwrap_or_else(error_exit0);
+			}
+			if !REPO_PATH.exists() {
+				fs::create_dir(&*REPO_PATH).unwrap_or_else(error_exit0);
+			}
+			if !SCRIPT_ROOT.exists() {
+				fs::create_dir(&*SCRIPT_ROOT).unwrap_or_else(error_exit0);
+			}
+		}
+		TopCommand::Add { name, path } => match Config::load() {
+			Ok(mut gpm_cfg) => {
+				gpm_cfg
+					.add(
+						name.clone(),
+						&match path {
+							Some(p) => env::current_dir().unwrap().join(p).clean(),
+							None => REPO_PATH.join(&name),
+						},
+					)
+					.unwrap_or_else(error_exit0);
+				gpm_cfg.save().unwrap_or_else(error_exit0);
+			}
+			Err(e) => error_exit0(e),
+		},
+		TopCommand::Remove { name, registry } => match Config::load() {
+			Ok(mut gpm_cfg) => {
+				if registry {
+					gpm_cfg.remove_registry(name);
+				} else {
+					gpm_cfg.remove(name);
+				}
+				gpm_cfg.save().unwrap_or_else(error_exit0);
+			}
+			Err(e) => error_exit0(e),
+		},
+		TopCommand::List => match Config::load() {
+			Ok(gpm_cfg) => print!("{}", gpm_cfg),
+			Err(e) => error_exit0(e),
+		},
+		TopCommand::Repo(repo) => {
+			let repo_cfg_path = &config::main::get_repo_path(&repo.name).join(REPO_CONFIG);
+			match RepoConfig::load(repo_cfg_path) {
+				Ok(mut repo_cfg) => {
+					match repo.command {
+						RepositoryCommand::Add {
+							name,
+							r#type,
+							args,
+							cwd,
+						} => repo_cfg
+							.add(name, r#type, args.into_boxed_slice(), cwd)
+							.unwrap_or_else(error_exit0),
+						RepositoryCommand::Remove { name, registry } => {
+							if registry {
+								repo_cfg.remove_registry(name);
+							} else {
+								repo_cfg.remove(name)
+							}
+						}
+						RepositoryCommand::RemoveEtag => repo_cfg.remove_etag(),
+						RepositoryCommand::Update { name, all } => {
+							if all {
+								repo_cfg.update_all();
+							} else {
+								repo_cfg.update(name);
+							}
+						}
+						RepositoryCommand::Clone { name } => repo_cfg.copy(name),
+						RepositoryCommand::List => {
+							print!("{}", repo_cfg);
+							return;
+						}
+					}
+					repo_cfg.save(repo_cfg_path).unwrap_or_else(error_exit0);
+				}
+				Err(e) => error_exit0(e),
+			}
+		}
+		TopCommand::Type(t) => match t {
+			TypeCommand::Add { name, ext, shell } => match TypeConfig::load() {
+				Ok(mut type_cfg) => {
+					type_cfg.add(name, ext, shell).unwrap_or_else(error_exit0);
+					type_cfg.save().unwrap_or_else(error_exit0);
+				}
+				Err(e) => error_exit0(e),
+			},
+			TypeCommand::Remove { name, registry } => match TypeConfig::load() {
+				Ok(mut type_cfg) => {
+					if registry {
+						type_cfg.remove_registry(name);
+					} else {
+						type_cfg.remove(name);
+					}
+					type_cfg.save().unwrap_or_else(error_exit0);
+				}
+				Err(e) => error_exit0(e),
+			},
+			TypeCommand::List => match TypeConfig::load() {
+				Ok(type_cfg) => print!("{}", type_cfg),
+				Err(e) => error_exit0(e),
+			},
+		},
+		TopCommand::Generate { shell } => {
+			clap_complete::generate(shell, &mut App::command(), "gpm", &mut io::stdout())
+		}
+	}
 }

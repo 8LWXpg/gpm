@@ -53,13 +53,13 @@ macro_rules! remove {
 
 pub fn sort_keys<T, S>(value: &HashMap<String, T>, serializer: S) -> Result<S::Ok, S::Error>
 where
-    T: Serialize,
-    S: Serializer,
+	T: Serialize,
+	S: Serializer,
 {
-    value
-        .iter()
-        .collect::<BTreeMap<_, _>>()
-        .serialize(serializer)
+	value
+		.iter()
+		.collect::<BTreeMap<_, _>>()
+		.serialize(serializer)
 }
 
 /// prompt the user for a yes/no response.
@@ -67,13 +67,13 @@ where
 /// # Arguments
 /// `message` - The prompt to display, appended with " [y/N]: "
 pub fn prompt(message: &str) -> Result<bool> {
-    let mut input = String::new();
-    print!("{} [y/N]: ", message);
-    io::stdout().flush()?; // Make sure the prompt is immediately displayed
-    io::stdin().read_line(&mut input)?;
-    match input.trim().to_lowercase().as_str() {
-        "y" => Ok(true),
-        "n" => Ok(false),
-        _ => Ok(false),
-    }
+	let mut input = String::new();
+	print!("{} [y/N]: ", message);
+	io::stdout().flush()?; // Make sure the prompt is immediately displayed
+	io::stdin().read_line(&mut input)?;
+	match input.trim().to_lowercase().as_str() {
+		"y" => Ok(true),
+		"n" => Ok(false),
+		_ => Ok(false),
+	}
 }
