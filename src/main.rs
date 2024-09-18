@@ -110,7 +110,7 @@ enum RepositoryCommand {
 		/// Args get passed to the script
 		args: Vec<String>,
 
-		/// If we passing cwd to the script
+		/// Passing cwd to the script
 		#[clap(short, long)]
 		cwd: bool,
 	},
@@ -119,7 +119,7 @@ enum RepositoryCommand {
 	#[clap(visible_alias = "r")]
 	#[command(arg_required_else_help = true)]
 	Remove {
-		/// The name of the package
+		/// Package names
 		#[clap(num_args = 1..)]
 		name: Vec<String>,
 
@@ -135,7 +135,7 @@ enum RepositoryCommand {
 	#[clap(visible_alias = "u")]
 	#[command(arg_required_else_help = true)]
 	Update {
-		/// Package name
+		/// Package names
 		#[clap(num_args = 1..)]
 		name: Vec<String>,
 
@@ -148,7 +148,7 @@ enum RepositoryCommand {
 	#[clap(visible_alias = "c")]
 	#[command(arg_required_else_help = true)]
 	Clone {
-		/// Package name
+		/// Package names
 		#[clap(num_args = 1..)]
 		name: Vec<String>,
 	},
@@ -178,7 +178,7 @@ enum TypeCommand {
 	#[clap(visible_alias = "r")]
 	#[command(arg_required_else_help = true)]
 	Remove {
-		/// Type name
+		/// Type names
 		#[clap(num_args = 1..)]
 		name: Vec<String>,
 
