@@ -151,7 +151,7 @@ impl TypeConfig {
 		type_name: &str,
 		name: &str,
 		repo_path: &Path,
-		etag: Option<&str>,
+		tag: Option<&str>,
 		cwd: Option<&str>,
 		args: &[String],
 	) -> Result<String> {
@@ -177,13 +177,13 @@ impl TypeConfig {
 		let mut cmd = std::process::Command::new(shell);
 		cmd.current_dir(repo_path).args(shell_args.iter());
 		cmd.arg(SCRIPT_ROOT.join(type_name).with_extension(&prop.ext))
-			.arg("-name")
+			.arg("-n")
 			.arg(name);
 		if let Some(cwd) = cwd {
-			cmd.arg("-cwd").arg(cwd);
+			cmd.arg("-d").arg(cwd);
 		}
-		if let Some(etag) = etag {
-			cmd.arg("-etag").arg(etag);
+		if let Some(tag) = tag {
+			cmd.arg("-t").arg(tag);
 		}
 		cmd.args(args);
 		println!("{} {:?}", "executing:".bright_blue(), cmd);

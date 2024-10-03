@@ -65,7 +65,7 @@ alias <NAME>='gpm repo <NAME>'
 
 ### Port packages
 
-1. Remove ETag field under `<repo>/version.toml` with `gpm repo <repo> remove-etag`
+1. Remove Tag field under `<repo>/version.toml` with `gpm repo <repo> remove-tag`
 2. Add a new repository.
 3. Copy the `<repo>/version.toml` to the new repository.
 4. Update all packages with `gpm repo <repo> update -a`

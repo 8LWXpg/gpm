@@ -1,8 +1,7 @@
 {
     "cSpell.words": [
         "endregion",
-        "etag",
-        "Pwsh",
+        "pwsh",
         "tabwriter"
     ],
     "rust-analyzer.linkedProjects": [

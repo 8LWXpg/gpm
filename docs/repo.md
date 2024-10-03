@@ -57,12 +57,12 @@ Options:
   -h, --help  Print help
 ```
 
-### `remove-etag`
+### `remove-tag`
 
-Remove etag field for all packages in the repository
+Remove tag field for all packages in the repository
 
 ```
-Usage: gpm repo <NAME> remove-etag
+Usage: gpm repo <NAME> remove-tag
 
 Options:
   -h, --help  Print help

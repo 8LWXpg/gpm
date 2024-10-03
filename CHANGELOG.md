@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.0]
+
+### Changed
+
+- Changed argument name passed to the script (**Breaking Change**)
+  - `-name` -> `-n`
+  - `-cwd` -> `-d`
+  - `-etag` -> `-t`
+- Changed field name from `etag` to `tag` in `version.toml` (**Breaking Change**)
+- Changed `remove-etag` command to `remove-tag` (**Breaking Change**)
+
 ## [0.5.1]
 
 ### Changed

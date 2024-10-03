@@ -128,8 +128,8 @@ enum RepositoryCommand {
 		registry: bool,
 	},
 
-	/// Remove etag field for all packages in the repository
-	RemoveEtag,
+	/// Remove tag field for all packages in the repository
+	RemoveTag,
 
 	/// Update packages in the repository
 	#[clap(visible_alias = "u")]
@@ -288,7 +288,7 @@ fn main() {
 								repo_cfg.remove(name)
 							}
 						}
-						RepositoryCommand::RemoveEtag => repo_cfg.remove_etag(),
+						RepositoryCommand::RemoveTag => repo_cfg.remove_tag(),
 						RepositoryCommand::Update { name, all } => {
 							if all {
 								repo_cfg.update_all();

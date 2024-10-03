@@ -36,8 +36,8 @@ impl From<RepoConfig> for TomlRepoConfig {
 struct TomlPackage {
 	r#type: String,
 	args: Box<[String]>,
-	/// ETag for the package
-	etag: Option<String>,
+	/// Tag of the package
+	tag: Option<String>,
 	cwd: Option<String>,
 }
 
@@ -46,7 +46,7 @@ impl From<Package> for TomlPackage {
 		Self {
 			r#type: package.r#type,
 			args: package.args,
-			etag: package.etag,
+			tag: package.tag,
 			cwd: package.cwd,
 		}
 	}
@@ -150,10 +150,10 @@ impl RepoConfig {
 		}
 	}
 
-	/// Remove ETag for packages.
-	pub fn remove_etag(&mut self) {
+	/// Remove Tag for packages.
+	pub fn remove_tag(&mut self) {
 		for package in self.packages.values_mut() {
-			package.etag = None;
+			package.tag = None;
 		}
 	}
 
@@ -239,8 +239,8 @@ impl fmt::Display for RepoConfig {
 struct Package {
 	r#type: String,
 	args: Box<[String]>,
-	/// ETag for the package
-	etag: Option<String>,
+	/// Tag of the package
+	tag: Option<String>,
 	cwd: Option<String>,
 }
 
@@ -249,7 +249,7 @@ impl Package {
 		Self {
 			r#type,
 			args,
-			etag: None,
+			tag: None,
 			cwd: if cwd {
 				Some(env::current_dir().unwrap().to_str().unwrap().into())
 			} else {
@@ -260,16 +260,16 @@ impl Package {
 
 	/// Add package, execute the script.
 	fn add(&mut self, name: &str, repo_path: &Path, type_config: &TypeConfig) -> Result<()> {
-		let etag = type_config.execute(
+		let tag = type_config.execute(
 			&self.r#type,
 			name,
 			repo_path,
-			self.etag.as_deref(),
+			self.tag.as_deref(),
 			self.cwd.as_deref(),
 			&self.args,
 		)?;
-		if !etag.is_empty() {
-			self.etag = Some(etag);
+		if !tag.is_empty() {
+			self.tag = Some(tag);
 		}
 
 		Ok(())
@@ -307,7 +307,7 @@ impl From<TomlPackage> for Package {
 		Self {
 			r#type: package.r#type,
 			args: package.args,
-			etag: package.etag,
+			tag: package.tag,
 			cwd: package.cwd,
 		}
 	}
