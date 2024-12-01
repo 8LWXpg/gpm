@@ -3,7 +3,7 @@
 use super::util::{prompt, sort_keys};
 use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
@@ -109,7 +109,7 @@ impl TypeConfig {
 			e.insert(TypeProp::new(ext, shell));
 			Ok(())
 		} else {
-			Err(anyhow!("type '{}' already exists", name.bright_yellow()))
+			bail!("type '{}' already exists", name.bright_yellow())
 		}
 	}
 
@@ -157,22 +157,12 @@ impl TypeConfig {
 	) -> Result<String> {
 		let prop = match self.types.get(type_name) {
 			Some(prop) => prop,
-			None => {
-				return Err(anyhow!(
-					"type '{}' does not exist",
-					type_name.bright_yellow()
-				))
-			}
+			None => bail!("type '{}' does not exist", type_name.bright_yellow()),
 		};
 
 		let (shell, shell_args) = match self.shell.get_key_value(&prop.shell) {
 			Some(s) => s,
-			None => {
-				return Err(anyhow!(
-					"shell '{}' does not exist",
-					prop.shell.bright_yellow()
-				))
-			}
+			None => bail!("shell '{}' does not exist", prop.shell.bright_yellow()),
 		};
 		let mut cmd = std::process::Command::new(shell);
 		cmd.current_dir(repo_path).args(shell_args.iter());

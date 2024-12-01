@@ -68,7 +68,7 @@ where
 /// `message` - The prompt to display, appended with " [y/N]: "
 pub fn prompt(message: &str) -> Result<bool> {
 	let mut input = String::new();
-	print!("{} [y/N]: ", message);
+	print!("{message} [y/N]: ");
 	io::stdout().flush()?; // Make sure the prompt is immediately displayed
 	io::stdin().read_line(&mut input)?;
 	match input.trim().to_lowercase().as_str() {

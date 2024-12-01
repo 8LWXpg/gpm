@@ -4,7 +4,7 @@ use super::repository;
 use super::util::{prompt, sort_keys};
 use crate::{add, error, remove, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
@@ -84,10 +84,7 @@ impl Config {
 			add!("{}\t{}", name.bright_cyan(), path.to_str().unwrap());
 			Ok(())
 		} else {
-			Err(anyhow!(
-				"repository '{}' already exists",
-				name.bright_yellow()
-			))
+			bail!("repository '{}' already exists", name.bright_yellow())
 		}
 	}
 

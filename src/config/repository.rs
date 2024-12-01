@@ -4,7 +4,7 @@ use super::r#type::TypeConfig;
 use super::util::{prompt, sort_keys};
 use crate::{add, clone, error, remove, REPO_PATH};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
@@ -110,7 +110,7 @@ impl RepoConfig {
 			e.insert(package);
 			Ok(())
 		} else {
-			Err(anyhow!("package '{}' already exists", name.bright_yellow()))
+			bail!("package '{}' already exists", name.bright_yellow())
 		}
 	}
 
