@@ -3,7 +3,7 @@
 use super::util::{prompt, sort_keys};
 use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
