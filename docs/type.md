@@ -10,11 +10,11 @@ For example, a configuration file for a package type could look like this:
 
 ```toml
 [shell]
-pwsh = ["-nop"]
+pwsh = ["-nop"]  # default arg for shell
 
 [types.gh]
-ext = "ps1"
-shell = "pwsh"
+ext = "ps1"      # file extension for script file
+shell = "pwsh"   # shell to use
 ```
 
 This executes `pwsh -nop gh.ps1 [ARGS]...` when executing `gpm repo <NAME> add <PACKAGE> gh [ARGS]...`.
