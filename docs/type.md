@@ -35,7 +35,7 @@ It should look like this in practice:
 cd "/home/user/.gpm/repositories/exe" && "pwsh" "-nop" "/home/user/.gpm/scripts/zip_exe.ps1" "-n" "fzf" "-t" "0.55.0" "junegunn/fzf" "linux_amd64"
 ```
 
-Hence the script must be able to receive these arguments
+Hence the script must be able to process these arguments
 
 ```
 -n <NAME>
@@ -46,11 +46,11 @@ Hence the script must be able to receive these arguments
 
 With the following rules:
 
-- The script must able to receive arguments described below:
+- The script must able to process arguments described below:
   - `-n <PACKAGE>`: The name of the package.
   - `[-d <CWD>]`: If `--cwd` is passed, the current working directory will be passed to the script.
   - `[-t <TAG>]`: If the script returns a string in `stdout`, it will be saved and passed to the script on the next run.
-  - `[ARGS]...`: Additional arguments passed when adding the package
+  - `[ARGS]...`: Additional positional arguments passed when adding the package
 - The script must return an tag or an empty string (nothing) in `stdout`.
 - The resulted file/folder must be the same name as the package name. For example, if the package name is `test`, the resulted file/folder must be `test` at repository root.
 
