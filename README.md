@@ -4,9 +4,50 @@ So you want to make your own package manager?
 
 For something that feels like overkill to create standalone package manager, but is just too lazy to manually check for updates and download.
 
-## Installation
+## Introduction
+
+`gpm` is a lightweight command runner and configuration manager that centralizes the information required to execute scripts across custom-defined package types. It simplifies managing reusable scripts, repositories, and execution environments in a structured and extensible way.
+
+By default, `gpm` organizes your environment with the following directory layout:
 
 ```
+.gpm
+├── config.toml     - Stores global repository configuration
+├── types.toml      - Defines available package types and their shell arguments
+├── repositories    - Managed repositories and package data
+│   └── dir
+│       ├── .editorconfig
+│       ├── FUNDING.yml
+│       ├── LICENSE
+│       ├── Localizing.md
+│       ├── template.typ
+│       ├── version.toml    - Contains metadata and script arguments
+│       └── ISSUE_TEMPLATE
+└── scripts         - Script for all types defined in types.toml
+    ├── dir.ps1
+    ├── exe.ps1
+    ├── file.ps1
+    ├── README.md
+    ├── zip_exe.ps1
+    └── lib
+        └── gh_dl.ps1
+```
+
+## Installation
+
+### Download
+
+Download from [latest release](https://github.com/8LWXpg/gpm/releases/latest)
+
+### Install with `cargo-binstall`
+
+```shell
+cargo binstall --git https://github.com/8LWXpg/gpm gpm
+```
+
+### Compile from source
+
+```shell
 cargo install --git https://github.com/8LWXpg/gpm.git
 ```
 
@@ -14,13 +55,13 @@ cargo install --git https://github.com/8LWXpg/gpm.git
 
 ### Initialize the package manager
 
-```bash
+```shell
 gpm init
 ```
 
 ### Add a new package type
 
-```bash
+```shell
 gpm type add <NAME> <EXT> <SHELL>
 ```
 
@@ -35,7 +76,7 @@ Script file is created at `~/.gpm/scripts/<NAME>.<EXT>`, see [here](./docs/type.
 
 ### Add a new repository
 
-```bash
+```shell
 gpm add <NAME> 
 ```
 
@@ -43,16 +84,16 @@ For more information see [here](./docs/repo.md).
 
 ### Add a package to the repository
 
-```bash
+```shell
 gpm repo <NAME> add <NAME> <TYPE> [ARGS]...
 ```
 
 > [!IMPORTANT]
-> Package name must be the same as file/folder name in order to work properly.
+> Package name must be the same as resulted package file/folder name in order to work properly.
 
 ### Make an alias for the repo
 
-```bash
+```shell
 alias <NAME>='gpm repo <NAME>'
 ```
 

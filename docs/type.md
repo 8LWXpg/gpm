@@ -4,7 +4,7 @@ Manage package types.
 
 ## What is a package type?
 
-A package type decides how `gpm` install, update packages.
+A package type decides how `gpm` install and update packages.
 
 For example, a configuration file for a package type could look like this:
 

@@ -8,18 +8,18 @@ use clap::CommandFactory;
 use clap::{builder::styling, Args, Parser, Subcommand};
 use clap_complete::Shell;
 use colored::Colorize;
-use once_cell::sync::Lazy;
 use path_clean::PathClean;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 use std::{env, fs, io, process};
 
-static GPM_HOME: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap().join(".gpm"));
-static GPM_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("config.toml"));
+static GPM_HOME: LazyLock<PathBuf> = LazyLock::new(|| dirs::home_dir().unwrap().join(".gpm"));
+static GPM_CONFIG: LazyLock<PathBuf> = LazyLock::new(|| GPM_HOME.join("config.toml"));
 /// config for each repository
 static REPO_CONFIG: &str = "version.toml";
-static REPO_PATH: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("repositories"));
-static SCRIPT_ROOT: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("scripts"));
-static TYPES_CONFIG: Lazy<PathBuf> = Lazy::new(|| GPM_HOME.join("types.toml"));
+static REPO_PATH: LazyLock<PathBuf> = LazyLock::new(|| GPM_HOME.join("repositories"));
+static SCRIPT_ROOT: LazyLock<PathBuf> = LazyLock::new(|| GPM_HOME.join("scripts"));
+static TYPES_CONFIG: LazyLock<PathBuf> = LazyLock::new(|| GPM_HOME.join("types.toml"));
 
 // region: clap macros
 #[derive(Debug, Parser)]

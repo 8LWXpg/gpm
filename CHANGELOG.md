@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1]
+
+### Changed
+
+- Bumped dependencies.
+- Removed `once_cell`.
+
 ## [0.6.0]
 
 ### Changed
