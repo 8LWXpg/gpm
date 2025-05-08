@@ -1,6 +1,11 @@
 [package]
 name = "gpm"
-version = "0.6.0"
+version = "0.6.1"
+authors = ["8LWXpg"]
+description = "A fully customizable general purpose package manager "
+license = "MIT"
+repository = "https://github.com/8LWXpg/gpm"
+readme = "README.md"
 edition = "2021"
 
 [package.metadata.binstall]
