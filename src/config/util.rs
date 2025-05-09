@@ -27,7 +27,7 @@ macro_rules! print_message {
     };
 }
 
-/// print message for adding an item.
+/// Print message for adding an item.
 #[macro_export]
 macro_rules! add {
     ($($arg:tt)*) => {
@@ -35,7 +35,7 @@ macro_rules! add {
     };
 }
 
-/// print message for cloning an item.
+/// Print message for cloning an item.
 #[macro_export]
 macro_rules! clone {
     ($($arg:tt)*) => {
@@ -43,7 +43,7 @@ macro_rules! clone {
     };
 }
 
-/// print message for removing an item.
+/// Print message for removing an item.
 #[macro_export]
 macro_rules! remove {
     ($($arg:tt)*) => {
@@ -62,7 +62,7 @@ where
 		.serialize(serializer)
 }
 
-/// prompt the user for a yes/no response.
+/// Prompt the user for a yes/no response.
 ///
 /// # Arguments
 /// `message` - The prompt to display, appended with " [y/N]: "

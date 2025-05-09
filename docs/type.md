@@ -51,7 +51,7 @@ With the following rules:
   - `[-d <CWD>]`: If `--cwd` is passed, the current working directory will be passed to the script.
   - `[-t <TAG>]`: If the script returns a string in `stdout`, it will be saved and passed to the script on the next run.
   - `[ARGS]...`: Additional positional arguments passed when adding the package
-- The script must return an tag or an empty string (nothing) in `stdout`.
+- The script must return a tag or an empty string (nothing) in `stdout`.
 - The resulted file/folder must be the same name as the package name. For example, if the package name is `test`, the resulted file/folder must be `test` at repository root.
 
 ### Example

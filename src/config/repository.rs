@@ -62,7 +62,7 @@ pub struct RepoConfig {
 }
 
 impl RepoConfig {
-	/// Create a empty config, panic if failed to load TypeConfig.
+	/// Create an empty config, panic if failed to load TypeConfig.
 	pub fn new(path: &Path) -> Self {
 		Self {
 			packages: HashMap::new(),
