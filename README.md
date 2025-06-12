@@ -33,6 +33,11 @@ By default, `gpm` organizes your environment with the following directory layout
         └── gh_dl.ps1
 ```
 
+### Core Concept
+
+- Repository - A folder that stores packages
+- Package type - Defines how the package is handled handled by the script with the same name.
+
 ## Installation
 
 ### Download
