@@ -2,12 +2,12 @@
 
 use super::repository;
 use super::util::{prompt, sort_keys};
-use crate::{add, error, remove, GPM_CONFIG, REPO_CONFIG, REPO_PATH};
+use crate::{GPM_CONFIG, REPO_CONFIG, REPO_PATH, add, error, remove};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, hash_map::Entry};
 use std::io::Write;
 use std::path::Path;
 use std::{fmt, fs};
@@ -165,7 +165,7 @@ impl fmt::Display for Config {
 		}
 		tw.flush().unwrap();
 		let result = String::from_utf8(tw.into_inner().unwrap()).unwrap();
-		write!(f, "{}", result)
+		write!(f, "{result}")
 	}
 }
 

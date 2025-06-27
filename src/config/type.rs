@@ -1,12 +1,12 @@
 //! Handling package type configuration file at TYPES_CONFIG.
 
 use super::util::{prompt, sort_keys};
-use crate::{add, error, remove, SCRIPT_ROOT, TYPES_CONFIG};
+use crate::{SCRIPT_ROOT, TYPES_CONFIG, add, error, remove};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, hash_map::Entry};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -101,7 +101,7 @@ impl TypeConfig {
 	/// Add a new type.
 	pub fn add(&mut self, name: String, ext: String, shell: String) -> Result<()> {
 		if let Entry::Vacant(e) = self.types.entry(name.clone()) {
-			let path = SCRIPT_ROOT.join(format!("{}.{}", name, ext));
+			let path = SCRIPT_ROOT.join(format!("{name}.{ext}"));
 			if !path.exists() {
 				File::create(path)?;
 			}

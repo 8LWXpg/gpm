@@ -1,11 +1,11 @@
 mod config;
 
 use crate::config::main::Config;
-use crate::config::r#type::TypeConfig;
 use crate::config::repository::RepoConfig;
+use crate::config::r#type::TypeConfig;
 
 use clap::CommandFactory;
-use clap::{builder::styling, Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, builder::styling};
 use clap_complete::Shell;
 use colored::Colorize;
 use path_clean::PathClean;
@@ -265,7 +265,7 @@ fn main() {
 			Err(e) => error_exit0(e),
 		},
 		TopCommand::List => match Config::load() {
-			Ok(gpm_cfg) => print!("{}", gpm_cfg),
+			Ok(gpm_cfg) => print!("{gpm_cfg}"),
 			Err(e) => error_exit0(e),
 		},
 		TopCommand::Repo(repo) => {
@@ -298,7 +298,7 @@ fn main() {
 						}
 						RepositoryCommand::Clone { name } => repo_cfg.copy(name),
 						RepositoryCommand::List => {
-							print!("{}", repo_cfg);
+							print!("{repo_cfg}");
 							return;
 						}
 					}
@@ -327,7 +327,7 @@ fn main() {
 				Err(e) => error_exit0(e),
 			},
 			TypeCommand::List => match TypeConfig::load() {
-				Ok(type_cfg) => print!("{}", type_cfg),
+				Ok(type_cfg) => print!("{type_cfg}"),
 				Err(e) => error_exit0(e),
 			},
 		},

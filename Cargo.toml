@@ -6,7 +6,8 @@ description = "A fully customizable general purpose package manager "
 license = "MIT"
 repository = "https://github.com/8LWXpg/gpm"
 readme = "README.md"
-edition = "2021"
+edition = "2024"
+rust-version = "1.88.0"
 
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }{ archive-suffix }"

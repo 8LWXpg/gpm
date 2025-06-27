@@ -2,12 +2,12 @@
 
 use super::r#type::TypeConfig;
 use super::util::{prompt, sort_keys};
-use crate::{add, clone, error, remove, REPO_PATH};
+use crate::{REPO_PATH, add, clone, error, remove};
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, hash_map::Entry};
 use std::io::Write;
 use std::path::Path;
 use std::{env, fmt, fs, io};
